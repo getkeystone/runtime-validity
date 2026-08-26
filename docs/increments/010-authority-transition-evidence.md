@@ -448,23 +448,23 @@ Observed outputs include:
 
 ## Acceptance Criteria
 
-- [ ] Changing process-local authority from `true` to `false` creates a structured transition record.
-- [ ] The transition record contains `previous_authority_valid = true`.
-- [ ] The transition record contains `current_authority_valid = false`.
-- [ ] The transition record receives a UUID identifier.
-- [ ] The transition record contains UTC record-time metadata.
-- [ ] The retained transition record remains unchanged when the mutable runtime state changes later.
-- [ ] The transition can be retrieved by identifier during the same process lifetime.
-- [ ] An unknown valid transition identifier returns HTTP 404.
-- [ ] A malformed transition identifier is rejected with HTTP 422.
-- [ ] Assigning the existing authority value does not create a transition record.
-- [ ] Caller input to `POST /decide` cannot supply a transition artifact as server-retained transition evidence.
-- [ ] Existing full-revalidation behavior remains unchanged.
-- [ ] Existing no-revalidation behavior remains unchanged.
-- [ ] Existing decision-record retrieval remains unchanged.
-- [ ] Existing caller-supplied runtime-state rejection remains unchanged.
-- [ ] Transition-store state is isolated between tests.
-- [ ] The complete existing test suite continues to pass.
+- [x] Changing process-local authority from `true` to `false` creates a structured transition record.
+- [x] The transition record contains `previous_authority_valid = true`.
+- [x] The transition record contains `current_authority_valid = false`.
+- [x] The transition record receives a UUID identifier.
+- [x] The transition record contains UTC record-time metadata.
+- [x] The retained transition record remains unchanged when the mutable runtime state changes later.
+- [x] The transition can be retrieved by identifier during the same process lifetime.
+- [x] An unknown valid transition identifier returns HTTP 404.
+- [x] A malformed transition identifier is rejected with HTTP 422.
+- [x] Assigning the existing authority value does not create a transition record.
+- [x] Caller input to `POST /decide` cannot supply a transition artifact as server-retained transition evidence.
+- [x] Existing full-revalidation behavior remains unchanged.
+- [x] Existing no-revalidation behavior remains unchanged.
+- [x] Existing decision-record retrieval remains unchanged.
+- [x] Existing caller-supplied runtime-state rejection remains unchanged.
+- [x] Transition-store state is isolated between tests.
+- [x] The complete existing test suite continues to pass.
 
 ## Failure Criteria
 
@@ -1108,18 +1108,53 @@ Increment 010 alone cannot establish that the four-field representation is:
 
 ## Verification
 
-Verification will require:
+Local verification completed on the Increment 010 feature branch with:
 
 ```bash
 git diff --check
 python -m pytest -v
 ```
 
-The observed test result should be recorded only after implementation and successful local execution.
+Observed local result:
 
-GitHub Actions should independently execute the completed test suite through the pull-request workflow.
+```text
+20 passed in 0.24s
+```
 
-Internal test success must not be described as independent validation.
+The 20-test suite includes the 13 tests retained from Increments 001 through 009 and 7 Increment 010 tests covering:
+
+- transition creation for a controlled `true -> false` authority change
+- UUID and UTC record-time metadata
+- retrieval by transition identifier
+- HTTP 404 for an unknown valid transition identifier
+- HTTP 422 for a malformed transition identifier
+- no transition record for a same-value assignment
+- retained transition stability across a later authority change
+- rejection of caller-supplied transition evidence
+
+The test fixture also isolates the process-local transition store before and after each test.
+
+This is an internal evaluation result under controlled process-local conditions.
+
+It establishes that the implementation exhibits the specified transition-recording and retrieval behavior in the exercised scenarios.
+
+It does not independently establish:
+
+- authenticity of the represented authority transition
+- integrity or tamper resistance of the retained artifact
+- semantic correctness of the authority values
+- completeness of transition capture outside the exercised mutation path
+- governance materiality
+- causal relevance to a particular decision
+- decision-transition binding
+- correctness under concurrency or distributed execution
+- durability across process restart
+- independent validation
+- broader runtime-governance effectiveness
+
+GitHub Actions verification through the pull-request workflow remains pending.
+
+The increment should remain `In Progress` until that repository-level verification succeeds.
 
 ## Next Step
 
