@@ -1,6 +1,27 @@
 # Track A Runtime Validity
 
-Reference implementation for experiments in runtime validity and revalidation before consequential AI actions.
+Track A is an experimental component of the broader Governed Execution runtime-governance reference implementation.
+
+This repository isolates one research question: runtime validity and revalidation of prior governance decisions before consequential action.
+
+The broader platform is intended to compose multiple governance mechanisms across control, execution, and evidence planes, with a separate action boundary governing whether system output may create external consequence.
+
+Track A is deliberately developed and evaluated as a narrow component so its behavior, assumptions, failure modes, and evidence can be examined separately before broader integration.
+
+Results from this repository should not be interpreted as validation of the broader platform architecture or of runtime governance generally.
+
+## Relationship to the Broader Platform
+
+Track A is one component in a larger Governed Execution engineering and research program.
+
+Individual tracks isolate governance mechanisms or research questions so they can be implemented and tested independently. The broader platform is intended to study how those mechanisms interact when composed into a runtime system.
+
+This repository therefore serves two roles:
+
+1. A bounded experimental artifact for runtime-validity research.
+2. A component intended for later integration with other Governed Execution tracks.
+
+Integration does not imply that results from one track automatically generalize to the others. Composition, interaction effects, failure modes, and portability require separate evaluation.
 
 ## Current Status
 
