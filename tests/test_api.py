@@ -22,12 +22,90 @@ def test_decide_returns_proceed_for_valid_request() -> None:
                     }
                 ],
             },
+            "runtime_state": {
+                "authority_valid": True,
+            },
             "revalidation_mode": "full",
         },
     )
 
     assert response.status_code == 200
     assert response.json() == {"outcome": "PROCEED"}
+
+
+def test_decide_accepts_false_authority_state() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "runtime_state": {
+                "authority_valid": False,
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert response.status_code == 200
+
+
+def test_decide_rejects_missing_runtime_state() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_decide_rejects_malformed_authority_state() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "runtime_state": {
+                "authority_valid": "yes",
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_decide_rejects_invalid_revalidation_mode() -> None:
@@ -45,6 +123,9 @@ def test_decide_rejects_invalid_revalidation_mode() -> None:
                         "expected": True,
                     }
                 ],
+            },
+            "runtime_state": {
+                "authority_valid": True,
             },
             "revalidation_mode": "sometimes",
         },
@@ -69,6 +150,9 @@ def test_decide_rejects_unsupported_obligation_kind() -> None:
                     }
                 ],
             },
+            "runtime_state": {
+                "authority_valid": True,
+            },
             "revalidation_mode": "full",
         },
     )
@@ -85,6 +169,9 @@ def test_decide_rejects_prior_decision_without_obligations() -> None:
                 "decision_id": "decision-123",
                 "outcome": "PROCEED",
                 "obligations": [],
+            },
+            "runtime_state": {
+                "authority_valid": True,
             },
             "revalidation_mode": "full",
         },

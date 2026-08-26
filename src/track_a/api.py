@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 
 
 app = FastAPI(title="Track A Runtime Validity")
@@ -18,10 +18,13 @@ class PriorDecision(BaseModel):
     outcome: Literal["PROCEED"]
     obligations: list[Obligation] = Field(min_length=1)
 
+class RuntimeState(BaseModel):
+    authority_valid: StrictBool
 
 class DecisionRequest(BaseModel):
     action_proposal: str
     prior_decision: PriorDecision
+    runtime_state: RuntimeState
     revalidation_mode: Literal["none", "full"]
 
 
