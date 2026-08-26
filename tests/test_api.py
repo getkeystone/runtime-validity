@@ -6,7 +6,7 @@ from track_a.api import app
 client = TestClient(app)
 
 
-def test_decide_returns_proceed_when_authority_matches() -> None:
+def test_decide_returns_proceed_with_match_evidence() -> None:
     response = client.post(
         "/decide",
         json={
@@ -30,10 +30,26 @@ def test_decide_returns_proceed_when_authority_matches() -> None:
     )
 
     assert response.status_code == 200
-    assert response.json() == {"outcome": "PROCEED"}
+    assert response.json() == {
+        "outcome": "PROCEED",
+        "evidence": {
+            "action_proposal": "send customer notification",
+            "prior_decision_id": "decision-123",
+            "revalidation_mode": "full",
+            "obligation_evaluations": [
+                {
+                    "obligation_id": "authority-1",
+                    "kind": "authority_valid",
+                    "expected": True,
+                    "current": True,
+                    "result": "MATCH",
+                }
+            ],
+        },
+    }
 
 
-def test_decide_returns_hold_when_authority_no_longer_matches() -> None:
+def test_decide_returns_hold_with_mismatch_evidence() -> None:
     response = client.post(
         "/decide",
         json={
@@ -57,10 +73,19 @@ def test_decide_returns_hold_when_authority_no_longer_matches() -> None:
     )
 
     assert response.status_code == 200
-    assert response.json() == {"outcome": "HOLD"}
+    assert response.json()["outcome"] == "HOLD"
+    assert response.json()["evidence"]["obligation_evaluations"] == [
+        {
+            "obligation_id": "authority-1",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": False,
+            "result": "MISMATCH",
+        }
+    ]
 
 
-def test_decide_skips_authority_comparison_when_revalidation_is_none() -> None:
+def test_decide_records_not_evaluated_when_revalidation_is_none() -> None:
     response = client.post(
         "/decide",
         json={
@@ -84,7 +109,16 @@ def test_decide_skips_authority_comparison_when_revalidation_is_none() -> None:
     )
 
     assert response.status_code == 200
-    assert response.json() == {"outcome": "PROCEED"}
+    assert response.json()["outcome"] == "PROCEED"
+    assert response.json()["evidence"]["obligation_evaluations"] == [
+        {
+            "obligation_id": "authority-1",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": None,
+            "result": "NOT_EVALUATED",
+        }
+    ]
 
 
 def test_decide_rejects_missing_runtime_state() -> None:
