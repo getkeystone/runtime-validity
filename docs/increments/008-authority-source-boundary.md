@@ -1,6 +1,6 @@
 # Increment 008: Authority Source Boundary
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -12,13 +12,17 @@ The uncertainty being removed is:
 
 ## Observable Behavior
 
-Before this increment, the caller provides:
+Before this increment:
 
 ```text
+caller
+  |
+  +-- action proposal
+  +-- prior decision
+  +-- runtime_state.authority_valid
+  |
+  v
 POST /decide
-    |
-    +-- prior decision
-    +-- runtime_state.authority_valid
 ```
 
 After this increment:
@@ -39,7 +43,7 @@ POST /decide
           obligation comparison
 ```
 
-The decision request no longer owns `runtime_state`.
+The decision request no longer contains `runtime_state`.
 
 For full revalidation:
 
@@ -57,19 +61,64 @@ server-provided authority = false
 → HOLD
 ```
 
-A caller attempting to supply `runtime_state` is rejected rather than silently overriding or being confused with server-controlled state.
+A caller attempting to submit `runtime_state` is rejected with HTTP 422.
+
+For `revalidation_mode: "none"`:
+
+```text
+current = null
+result = NOT_EVALUATED
+outcome = PROCEED
+```
 
 ## Acceptance Criteria
 
-- [ ] `DecisionRequest` no longer accepts current runtime authority state as a decision input.
-- [ ] Full revalidation obtains current authority state from a server-side source.
-- [ ] Matching server-provided authority returns `PROCEED`.
-- [ ] Mismatching server-provided authority returns `HOLD`.
-- [ ] Evidence records the authority value obtained from the server-side source.
-- [ ] A caller-supplied `runtime_state` field is rejected.
-- [ ] `revalidation_mode: "none"` remains explicitly `NOT_EVALUATED`.
-- [ ] Existing decision-record metadata and retrieval behavior remains intact.
-- [ ] Automated tests control the authority source independently of the decision request.
+- [x] `DecisionRequest` no longer accepts current runtime authority state as a decision input.
+- [x] Full revalidation obtains current authority state from a server-side source.
+- [x] Matching server-provided authority returns `PROCEED`.
+- [x] Mismatching server-provided authority returns `HOLD`.
+- [x] Evidence records the authority value obtained from the server-side source.
+- [x] A caller-supplied `runtime_state` field is rejected.
+- [x] `revalidation_mode: "none"` remains explicitly `NOT_EVALUATED`.
+- [x] Existing decision-record metadata and retrieval behavior remains intact.
+- [x] Automated tests control the authority source independently of the decision request.
+
+## Verification
+
+Commands:
+
+```bash
+git diff --check
+python -m pytest -v
+```
+
+Observed result:
+
+```text
+11 passed in 0.21s
+```
+
+Verified behaviors:
+
+- server-side authority `true` produces `MATCH` and `PROCEED`
+- server-side authority `false` produces `MISMATCH` and `HOLD`
+- the evidence records the server-provided observed authority value
+- `revalidation_mode: "none"` records `NOT_EVALUATED`
+- caller-supplied `runtime_state` is rejected with HTTP 422
+- invalid revalidation modes remain rejected
+- unsupported obligation kinds remain rejected
+- prior decisions without obligations remain rejected
+- decision metadata remains generated
+- decision records remain retrievable by `record_id`
+- unknown and malformed record identifiers retain their existing behavior
+
+## Implementation Note
+
+The current boundary is implemented using FastAPI dependency injection.
+
+Tests replace the authority dependency using `app.dependency_overrides`, allowing authority state to vary independently from the decision request.
+
+This is an engineering mechanism for separating trust boundaries. It does not establish that the underlying source is authoritative.
 
 ## Out of Scope
 
@@ -86,14 +135,14 @@ This increment does not yet:
 
 ## Known Limitations
 
-The initial authority source remains process-local and controlled by the service/test harness.
+The initial authority source remains process-local and controlled by the service or test harness.
 
-Separating the source from the decision request reduces one trust-boundary problem, but does not establish that the source itself is correct, current, authenticated, or authoritative.
+Separating the source from the decision request removes one trust-boundary problem, but does not establish that the source itself is correct, current, authenticated, or authoritative.
 
-Tests may substitute authority-source values in order to exercise runtime-change scenarios. Test control over the source is not equivalent to production authority acquisition.
+Test control over the source is not equivalent to production authority acquisition.
 
 `HOLD` on authority mismatch remains an implementation design choice for this experiment.
 
 ## Next Step
 
-Implement a server-side authority source boundary and remove caller ownership of current authority state.
+Define the next runtime-change experiment using authority state that can change independently between prior authorization and execution.
