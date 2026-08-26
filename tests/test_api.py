@@ -9,6 +9,7 @@ from track_a.api import (
     RuntimeState,
     app,
     get_current_runtime_state,
+    set_current_runtime_state,
 )
 
 
@@ -16,9 +17,13 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def clear_dependency_overrides() -> Iterator[None]:
+def reset_test_state() -> Iterator[None]:
     app.dependency_overrides.clear()
+    set_current_runtime_state(authority_valid=True)
+
     yield
+
+    set_current_runtime_state(authority_valid=True)
     app.dependency_overrides.clear()
 
 
@@ -307,3 +312,75 @@ def test_get_record_rejects_malformed_record_id() -> None:
     response = client.get("/records/not-a-uuid")
 
     assert response.status_code == 422
+
+
+def test_full_revalidation_detects_authority_change_before_execution() -> None:
+    set_current_runtime_state(authority_valid=True)
+
+    request = {
+        "action_proposal": "send customer notification",
+        "prior_decision": {
+            "decision_id": "decision-authority-change",
+            "outcome": "PROCEED",
+            "obligations": [
+                {
+                    "obligation_id": "authority-1",
+                    "kind": "authority_valid",
+                    "expected": True,
+                }
+            ],
+        },
+        "revalidation_mode": "full",
+    }
+
+    set_current_runtime_state(authority_valid=False)
+
+    response = client.post("/decide", json=request)
+
+    assert response.status_code == 200
+    assert response.json()["outcome"] == "HOLD"
+    assert response.json()["evidence"]["obligation_evaluations"] == [
+        {
+            "obligation_id": "authority-1",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": False,
+            "result": "MISMATCH",
+        }
+    ]
+
+
+def test_no_revalidation_does_not_evaluate_authority_change_before_execution() -> None:
+    set_current_runtime_state(authority_valid=True)
+
+    request = {
+        "action_proposal": "send customer notification",
+        "prior_decision": {
+            "decision_id": "decision-authority-change",
+            "outcome": "PROCEED",
+            "obligations": [
+                {
+                    "obligation_id": "authority-1",
+                    "kind": "authority_valid",
+                    "expected": True,
+                }
+            ],
+        },
+        "revalidation_mode": "none",
+    }
+
+    set_current_runtime_state(authority_valid=False)
+
+    response = client.post("/decide", json=request)
+
+    assert response.status_code == 200
+    assert response.json()["outcome"] == "PROCEED"
+    assert response.json()["evidence"]["obligation_evaluations"] == [
+        {
+            "obligation_id": "authority-1",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": None,
+            "result": "NOT_EVALUATED",
+        }
+    ]
