@@ -64,9 +64,11 @@ decision_records: dict[UUID, DecisionResponse] = {}
 def get_current_runtime_state() -> RuntimeState:
     return server_runtime_state
 
+
 def set_current_runtime_state(*, authority_valid: bool) -> None:
     global server_runtime_state
     server_runtime_state = RuntimeState(authority_valid=authority_valid)
+
 
 @app.post("/decide")
 def decide(
