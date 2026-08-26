@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, StrictBool
 
 
@@ -55,6 +55,9 @@ class DecisionResponse(BaseModel):
     evidence: DecisionEvidence
 
 
+decision_records: dict[UUID, DecisionResponse] = {}
+
+
 @app.post("/decide")
 def decide(request: DecisionRequest) -> DecisionResponse:
     evaluations: list[ObligationEvaluation] = []
@@ -92,7 +95,7 @@ def decide(request: DecisionRequest) -> DecisionResponse:
             )
         )
 
-    return DecisionResponse(
+    response = DecisionResponse(
         outcome=outcome,
         evidence=DecisionEvidence(
             record_id=uuid4(),
@@ -104,3 +107,17 @@ def decide(request: DecisionRequest) -> DecisionResponse:
             obligation_evaluations=evaluations,
         ),
     )
+
+    decision_records[response.evidence.record_id] = response
+
+    return response
+
+
+@app.get("/records/{record_id}")
+def get_record(record_id: UUID) -> DecisionResponse:
+    record = decision_records.get(record_id)
+
+    if record is None:
+        raise HTTPException(status_code=404, detail="Decision record not found")
+
+    return record

@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 
@@ -280,3 +280,61 @@ def test_decide_rejects_prior_decision_without_obligations() -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_decide_record_can_be_retrieved_by_record_id() -> None:
+    create_response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "runtime_state": {
+                "authority_valid": True,
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert create_response.status_code == 200
+
+    created_record = create_response.json()
+    record_id = created_record["evidence"]["record_id"]
+
+    retrieve_response = client.get(f"/records/{record_id}")
+
+    assert retrieve_response.status_code == 200
+    assert retrieve_response.json() == created_record
+
+
+def test_get_record_returns_404_for_unknown_record_id() -> None:
+    unknown_record_id = uuid4()
+
+    response = client.get(f"/records/{unknown_record_id}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Decision record not found"}
+
+
+def test_get_record_rejects_malformed_record_id() -> None:
+    response = client.get("/records/not-a-uuid")
+
+    assert response.status_code == 422
+
+
+
+
+
+
+
+
+
