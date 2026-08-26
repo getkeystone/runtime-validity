@@ -330,7 +330,7 @@ track-a-runtime-validity/
 │       ├── 005-decision-evidence-response.md
 │       ├── 006-decision-record-metadata.md
 │       ├── 007-decision-record-retrieval.md
-│       └── 008-authority-source-boundary.md
+│       ├── 008-authority-source-boundary.md
 │       └── 009-authority-change-revalidation.md
 ├── src/
 │   └── track_a/
