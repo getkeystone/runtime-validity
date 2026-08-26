@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, StrictBool
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 
 app = FastAPI(title="Track A Runtime Validity")
@@ -26,9 +26,10 @@ class RuntimeState(BaseModel):
 
 
 class DecisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     action_proposal: str
     prior_decision: PriorDecision
-    runtime_state: RuntimeState
     revalidation_mode: Literal["none", "full"]
 
 
@@ -55,11 +56,20 @@ class DecisionResponse(BaseModel):
     evidence: DecisionEvidence
 
 
+server_runtime_state = RuntimeState(authority_valid=True)
+
 decision_records: dict[UUID, DecisionResponse] = {}
 
 
+def get_current_runtime_state() -> RuntimeState:
+    return server_runtime_state
+
+
 @app.post("/decide")
-def decide(request: DecisionRequest) -> DecisionResponse:
+def decide(
+    request: DecisionRequest,
+    runtime_state: RuntimeState = Depends(get_current_runtime_state),
+) -> DecisionResponse:
     evaluations: list[ObligationEvaluation] = []
     outcome: Literal["PROCEED", "HOLD"] = "PROCEED"
 
@@ -76,7 +86,7 @@ def decide(request: DecisionRequest) -> DecisionResponse:
             )
             continue
 
-        current = request.runtime_state.authority_valid
+        current = runtime_state.authority_valid
         result: Literal["MATCH", "MISMATCH"]
 
         if current == obligation.expected:

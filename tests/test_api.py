@@ -1,15 +1,32 @@
+from collections.abc import Iterator
 from datetime import datetime
 from uuid import UUID, uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
-from track_a.api import app
+from track_a.api import (
+    RuntimeState,
+    app,
+    get_current_runtime_state,
+)
 
 
 client = TestClient(app)
 
 
-def test_decide_returns_proceed_with_match_evidence() -> None:
+@pytest.fixture(autouse=True)
+def clear_dependency_overrides() -> Iterator[None]:
+    app.dependency_overrides.clear()
+    yield
+    app.dependency_overrides.clear()
+
+
+def test_decide_returns_proceed_with_server_authority_match_evidence() -> None:
+    app.dependency_overrides[get_current_runtime_state] = lambda: RuntimeState(
+        authority_valid=True
+    )
+
     response = client.post(
         "/decide",
         json={
@@ -24,9 +41,6 @@ def test_decide_returns_proceed_with_match_evidence() -> None:
                         "expected": True,
                     }
                 ],
-            },
-            "runtime_state": {
-                "authority_valid": True,
             },
             "revalidation_mode": "full",
         },
@@ -51,7 +65,11 @@ def test_decide_returns_proceed_with_match_evidence() -> None:
     ]
 
 
-def test_decide_returns_hold_with_mismatch_evidence() -> None:
+def test_decide_returns_hold_with_server_authority_mismatch_evidence() -> None:
+    app.dependency_overrides[get_current_runtime_state] = lambda: RuntimeState(
+        authority_valid=False
+    )
+
     response = client.post(
         "/decide",
         json={
@@ -66,9 +84,6 @@ def test_decide_returns_hold_with_mismatch_evidence() -> None:
                         "expected": True,
                     }
                 ],
-            },
-            "runtime_state": {
-                "authority_valid": False,
             },
             "revalidation_mode": "full",
         },
@@ -88,6 +103,10 @@ def test_decide_returns_hold_with_mismatch_evidence() -> None:
 
 
 def test_decide_records_not_evaluated_when_revalidation_is_none() -> None:
+    app.dependency_overrides[get_current_runtime_state] = lambda: RuntimeState(
+        authority_valid=False
+    )
+
     response = client.post(
         "/decide",
         json={
@@ -102,9 +121,6 @@ def test_decide_records_not_evaluated_when_revalidation_is_none() -> None:
                         "expected": True,
                     }
                 ],
-            },
-            "runtime_state": {
-                "authority_valid": False,
             },
             "revalidation_mode": "none",
         },
@@ -139,9 +155,6 @@ def test_decide_returns_record_metadata() -> None:
                     }
                 ],
             },
-            "runtime_state": {
-                "authority_valid": True,
-            },
             "revalidation_mode": "full",
         },
     )
@@ -161,30 +174,7 @@ def test_decide_returns_record_metadata() -> None:
     assert evidence["schema_version"] == "1"
 
 
-def test_decide_rejects_missing_runtime_state() -> None:
-    response = client.post(
-        "/decide",
-        json={
-            "action_proposal": "send customer notification",
-            "prior_decision": {
-                "decision_id": "decision-123",
-                "outcome": "PROCEED",
-                "obligations": [
-                    {
-                        "obligation_id": "authority-1",
-                        "kind": "authority_valid",
-                        "expected": True,
-                    }
-                ],
-            },
-            "revalidation_mode": "full",
-        },
-    )
-
-    assert response.status_code == 422
-
-
-def test_decide_rejects_malformed_authority_state() -> None:
+def test_decide_rejects_caller_supplied_runtime_state() -> None:
     response = client.post(
         "/decide",
         json={
@@ -201,7 +191,7 @@ def test_decide_rejects_malformed_authority_state() -> None:
                 ],
             },
             "runtime_state": {
-                "authority_valid": "yes",
+                "authority_valid": False,
             },
             "revalidation_mode": "full",
         },
@@ -226,9 +216,6 @@ def test_decide_rejects_invalid_revalidation_mode() -> None:
                     }
                 ],
             },
-            "runtime_state": {
-                "authority_valid": True,
-            },
             "revalidation_mode": "sometimes",
         },
     )
@@ -252,9 +239,6 @@ def test_decide_rejects_unsupported_obligation_kind() -> None:
                     }
                 ],
             },
-            "runtime_state": {
-                "authority_valid": True,
-            },
             "revalidation_mode": "full",
         },
     )
@@ -271,9 +255,6 @@ def test_decide_rejects_prior_decision_without_obligations() -> None:
                 "decision_id": "decision-123",
                 "outcome": "PROCEED",
                 "obligations": [],
-            },
-            "runtime_state": {
-                "authority_valid": True,
             },
             "revalidation_mode": "full",
         },
@@ -297,9 +278,6 @@ def test_decide_record_can_be_retrieved_by_record_id() -> None:
                         "expected": True,
                     }
                 ],
-            },
-            "runtime_state": {
-                "authority_valid": True,
             },
             "revalidation_mode": "full",
         },
