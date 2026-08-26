@@ -1,6 +1,6 @@
 # Increment 009: Authority Change Revalidation
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -136,17 +136,17 @@ The experiment does not currently enforce an external consequential action after
 
 ## Acceptance Criteria
 
-- [ ] The server-controlled authority source can be changed independently of the decision request.
-- [ ] Tests establish an authority-valid state before the simulated runtime change.
-- [ ] Tests change authority to invalid before execution-time evaluation.
-- [ ] Full revalidation observes the changed authority state.
-- [ ] Full revalidation records `MISMATCH`.
-- [ ] Full revalidation returns `HOLD`.
-- [ ] The same changed-state scenario under `revalidation_mode: "none"` records `NOT_EVALUATED`.
-- [ ] The no-revalidation baseline does not record the changed authority value as evaluated.
-- [ ] Caller-supplied runtime authority remains rejected.
-- [ ] Existing decision evidence and record retrieval behavior remains intact.
-- [ ] Runtime state is reset between tests so scenarios remain isolated and reproducible.
+- [x] The server-controlled authority source can be changed independently of the decision request.
+- [x] Tests establish an authority-valid state before the simulated runtime change.
+- [x] Tests change authority to invalid before execution-time evaluation.
+- [x] Full revalidation observes the changed authority state.
+- [x] Full revalidation records `MISMATCH`.
+- [x] Full revalidation returns `HOLD`.
+- [x] The same changed-state scenario under `revalidation_mode: "none"` records `NOT_EVALUATED`.
+- [x] The no-revalidation baseline does not record the changed authority value as evaluated.
+- [x] Caller-supplied runtime authority remains rejected.
+- [x] Existing decision evidence and record retrieval behavior remains intact.
+- [x] Runtime state is reset between tests so scenarios remain isolated and reproducible.
 
 ## Baseline
 
@@ -352,11 +352,11 @@ The autouse test fixture resets the process-local authority state before and aft
 
 ## Interpretation Boundary
 
-If the expected tests pass, the supported engineering observation is narrow:
+The observed engineering result is narrow:
 
 > In this process-local implementation, when the controlled authority state changes from `true` to `false` before execution-time evaluation, full revalidation observes the changed state and produces `MISMATCH` and `HOLD`, while the no-revalidation baseline leaves the authority obligation `NOT_EVALUATED` and returns `PROCEED`.
 
-This would demonstrate the implemented behavior under the controlled scenario.
+This demonstrates the implemented behavior under the controlled scenario.
 
 It would not establish:
 
@@ -372,29 +372,27 @@ It would not establish:
 
 ## Verification
 
-Verification requires:
+Final local verification:
 
 ```bash
 git diff --check
 python -m pytest -v
 ```
 
-The expected suite size after this increment is:
+Observed result:
 
 ```text
-13 tests
+13 passed in 0.21s
 ```
 
-The final observed result should be recorded here only after the reviewed implementation and documentation changes have been rerun successfully.
+The passing suite includes the controlled authority-change scenarios for both full revalidation and the no-revalidation baseline, while retaining the existing API validation, decision-evidence, and record-retrieval tests.
+
+Repository CI remains the independent execution environment for the branch and pull request. A passing local suite does not substitute for CI or broader experimental validation.
 
 ## Next Step
 
-After final verification:
-
-1. Mark the acceptance criteria according to observed behavior.
-2. Record the final test result.
-3. Complete this increment document.
-4. Review the branch diff against `main`.
-5. Open the Increment 009 pull request.
+Open and review the Increment 009 pull request against `main`.
 
 A subsequent research increment can address what evidence is required to represent and reconstruct governance-material state transitions themselves, rather than relying on the experimental procedure to establish that the transition occurred.
+
+Another later increment can strengthen the authorization lifecycle by replacing the controlled prior-decision fixture with an explicit admission-time decision boundary. These are separate research and engineering questions.
