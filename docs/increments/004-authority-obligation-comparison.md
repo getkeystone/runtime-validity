@@ -1,6 +1,6 @@
 # Increment 004: Authority Obligation Comparison
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -26,18 +26,43 @@ current authority = false
 → HOLD
 ```
 
-For this increment, `HOLD` is the chosen disposition when the prior authority condition no longer matches current runtime state. It means the prior decision is not sufficient to proceed without further governance handling.
+For this increment, `HOLD` is the chosen disposition when the prior authority condition no longer matches current runtime state.
 
-For `revalidation_mode: "none"`, the comparison is not performed and the current baseline behavior remains `PROCEED`.
+For `revalidation_mode: "none"`, the comparison is not performed and the baseline behavior remains `PROCEED`.
 
 ## Acceptance Criteria
 
-- [ ] Full revalidation compares prior expected authority with current authority state.
-- [ ] Matching authority state returns `PROCEED`.
-- [ ] Mismatched authority state returns `HOLD`.
-- [ ] `revalidation_mode: "none"` does not perform the comparison.
-- [ ] Existing request validation behavior remains intact.
-- [ ] Automated tests cover matching, mismatching, and no-revalidation paths.
+- [x] Full revalidation compares prior expected authority with current authority state.
+- [x] Matching authority state returns `PROCEED`.
+- [x] Mismatched authority state returns `HOLD`.
+- [x] `revalidation_mode: "none"` does not perform the comparison.
+- [x] Existing request validation behavior remains intact.
+- [x] Automated tests cover matching, mismatching, and no-revalidation paths.
+
+## Verification
+
+Command:
+
+```bash
+python -m pytest -v
+```
+
+Observed result:
+
+```text
+8 passed in 0.17s
+```
+
+Verified behaviors:
+
+- matching authority under full revalidation returns `PROCEED`
+- mismatching authority under full revalidation returns `HOLD`
+- `revalidation_mode: "none"` bypasses the authority comparison and returns `PROCEED`
+- missing runtime state remains rejected
+- malformed runtime authority state remains rejected
+- invalid revalidation mode remains rejected
+- unsupported obligation kinds remain rejected
+- prior decisions without obligations remain rejected
 
 ## Out of Scope
 
@@ -60,4 +85,4 @@ The use of `HOLD` for an authority mismatch is an explicit design choice for thi
 
 ## Next Step
 
-Implement and test the authority obligation comparison.
+Represent enough decision evidence to explain why the request returned `PROCEED` or `HOLD`.
