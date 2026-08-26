@@ -1,3 +1,6 @@
+from datetime import datetime
+from uuid import UUID
+
 from fastapi.testclient import TestClient
 
 from track_a.api import app
@@ -30,23 +33,22 @@ def test_decide_returns_proceed_with_match_evidence() -> None:
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "outcome": "PROCEED",
-        "evidence": {
-            "action_proposal": "send customer notification",
-            "prior_decision_id": "decision-123",
-            "revalidation_mode": "full",
-            "obligation_evaluations": [
-                {
-                    "obligation_id": "authority-1",
-                    "kind": "authority_valid",
-                    "expected": True,
-                    "current": True,
-                    "result": "MATCH",
-                }
-            ],
-        },
-    }
+
+    body = response.json()
+
+    assert body["outcome"] == "PROCEED"
+    assert body["evidence"]["action_proposal"] == "send customer notification"
+    assert body["evidence"]["prior_decision_id"] == "decision-123"
+    assert body["evidence"]["revalidation_mode"] == "full"
+    assert body["evidence"]["obligation_evaluations"] == [
+        {
+            "obligation_id": "authority-1",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": True,
+            "result": "MATCH",
+        }
+    ]
 
 
 def test_decide_returns_hold_with_mismatch_evidence() -> None:
@@ -119,6 +121,44 @@ def test_decide_records_not_evaluated_when_revalidation_is_none() -> None:
             "result": "NOT_EVALUATED",
         }
     ]
+
+
+def test_decide_returns_record_metadata() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "runtime_state": {
+                "authority_valid": True,
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert response.status_code == 200
+
+    evidence = response.json()["evidence"]
+
+    UUID(evidence["record_id"])
+
+    created_at = datetime.fromisoformat(
+        evidence["created_at"].replace("Z", "+00:00")
+    )
+
+    assert created_at.utcoffset() is not None
+    assert created_at.utcoffset().total_seconds() == 0
+    assert evidence["schema_version"] == "1"
 
 
 def test_decide_rejects_missing_runtime_state() -> None:

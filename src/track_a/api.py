@@ -1,4 +1,6 @@
+from datetime import datetime, timezone
 from typing import Literal
+from uuid import UUID, uuid4
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, StrictBool
@@ -39,6 +41,9 @@ class ObligationEvaluation(BaseModel):
 
 
 class DecisionEvidence(BaseModel):
+    record_id: UUID
+    created_at: datetime
+    schema_version: Literal["1"]
     action_proposal: str
     prior_decision_id: str
     revalidation_mode: Literal["none", "full"]
@@ -90,6 +95,9 @@ def decide(request: DecisionRequest) -> DecisionResponse:
     return DecisionResponse(
         outcome=outcome,
         evidence=DecisionEvidence(
+            record_id=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            schema_version="1",
             action_proposal=request.action_proposal,
             prior_decision_id=request.prior_decision.decision_id,
             revalidation_mode=request.revalidation_mode,
