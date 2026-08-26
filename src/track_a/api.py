@@ -25,6 +25,13 @@ class RuntimeState(BaseModel):
     authority_valid: StrictBool
 
 
+class AuthorityTransition(BaseModel):
+    transition_id: UUID
+    occurred_at: datetime
+    previous_authority_valid: StrictBool
+    current_authority_valid: StrictBool
+
+
 class DecisionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -60,14 +67,38 @@ server_runtime_state = RuntimeState(authority_valid=True)
 
 decision_records: dict[UUID, DecisionResponse] = {}
 
+authority_transitions: dict[UUID, AuthorityTransition] = {}
+
 
 def get_current_runtime_state() -> RuntimeState:
     return server_runtime_state
 
 
-def set_current_runtime_state(*, authority_valid: bool) -> None:
+def set_current_runtime_state(
+    *,
+    authority_valid: bool,
+) -> AuthorityTransition | None:
     global server_runtime_state
-    server_runtime_state = RuntimeState(authority_valid=authority_valid)
+
+    next_runtime_state = RuntimeState(authority_valid=authority_valid)
+
+    previous_authority_valid = server_runtime_state.authority_valid
+    current_authority_valid = next_runtime_state.authority_valid
+
+    if previous_authority_valid == current_authority_valid:
+        return None
+
+    transition = AuthorityTransition(
+        transition_id=uuid4(),
+        occurred_at=datetime.now(timezone.utc),
+        previous_authority_valid=previous_authority_valid,
+        current_authority_valid=current_authority_valid,
+    )
+
+    authority_transitions[transition.transition_id] = transition
+    server_runtime_state = next_runtime_state
+
+    return transition
 
 
 @app.post("/decide")
@@ -136,3 +167,13 @@ def get_record(record_id: UUID) -> DecisionResponse:
         raise HTTPException(status_code=404, detail="Decision record not found")
 
     return record
+
+
+@app.get("/authority-transitions/{transition_id}")
+def get_authority_transition(transition_id: UUID) -> AuthorityTransition:
+    transition = authority_transitions.get(transition_id)
+
+    if transition is None:
+        raise HTTPException(status_code=404, detail="Authority transition not found")
+
+    return transition
