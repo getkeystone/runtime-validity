@@ -1,6 +1,6 @@
 # Increment 007: Decision Record Retrieval
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -39,14 +39,41 @@ The store used in this increment is process-local memory.
 
 ## Acceptance Criteria
 
-- [ ] Every successful `/decide` result is retained in the running service.
-- [ ] A record can be retrieved using its `record_id`.
-- [ ] Retrieved content preserves the original outcome.
-- [ ] Retrieved content preserves the original evidence.
-- [ ] An unknown valid UUID returns HTTP 404.
-- [ ] An invalid UUID path value is rejected by request validation.
-- [ ] Existing decision behavior remains unchanged.
-- [ ] Automated tests cover creation, retrieval, unknown records, and malformed record identifiers.
+- [x] Every successful `/decide` result is retained in the running service.
+- [x] A record can be retrieved using its `record_id`.
+- [x] Retrieved content preserves the original outcome.
+- [x] Retrieved content preserves the original evidence.
+- [x] An unknown valid UUID returns HTTP 404.
+- [x] An invalid UUID path value is rejected by request validation.
+- [x] Existing decision behavior remains unchanged.
+- [x] Automated tests cover creation, retrieval, unknown records, and malformed record identifiers.
+
+## Verification
+
+Commands:
+
+```bash
+git diff --check
+python -m pytest -v
+```
+
+Observed result:
+
+```text
+12 passed in 0.20s
+```
+
+`git diff --check` completed without warnings after removing trailing blank lines from `tests/test_api.py`.
+
+Verified behaviors:
+
+- `/decide` retains each successful decision response in process-local memory
+- a retained record can be retrieved using its `record_id`
+- retrieved content matches the originally returned decision and evidence
+- an unknown valid UUID returns HTTP 404
+- a malformed UUID is rejected with HTTP 422
+- existing `PROCEED`, `HOLD`, `MATCH`, `MISMATCH`, and `NOT_EVALUATED` behavior remains covered
+- existing request validation behavior remains covered
 
 ## Out of Scope
 
@@ -74,4 +101,4 @@ Successful retrieval shows that the service retained what it produced. It does n
 
 ## Next Step
 
-Implement process-local decision record retention and `GET /records/{record_id}` retrieval.
+Determine whether durable evidence storage is required for the next research question, or whether the next increment should move toward authoritative runtime state acquisition.
