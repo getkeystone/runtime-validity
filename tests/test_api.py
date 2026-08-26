@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from track_a.api import (
     RuntimeState,
     app,
+    authority_transitions,
     get_current_runtime_state,
     set_current_runtime_state,
 )
@@ -19,11 +20,15 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def reset_test_state() -> Iterator[None]:
     app.dependency_overrides.clear()
+
     set_current_runtime_state(authority_valid=True)
+    authority_transitions.clear()
 
     yield
 
     set_current_runtime_state(authority_valid=True)
+    authority_transitions.clear()
+
     app.dependency_overrides.clear()
 
 
@@ -384,3 +389,130 @@ def test_no_revalidation_does_not_evaluate_authority_change_before_execution() -
             "result": "NOT_EVALUATED",
         }
     ]
+
+
+def test_authority_change_creates_transition_record_with_metadata() -> None:
+    transition = set_current_runtime_state(authority_valid=False)
+
+    assert transition is not None
+
+    assert isinstance(transition.transition_id, UUID)
+
+    assert transition.occurred_at.utcoffset() is not None
+    assert transition.occurred_at.utcoffset().total_seconds() == 0
+
+    assert transition.previous_authority_valid is True
+    assert transition.current_authority_valid is False
+
+
+def test_authority_transition_can_be_retrieved_by_transition_id() -> None:
+    transition = set_current_runtime_state(authority_valid=False)
+
+    assert transition is not None
+
+    response = client.get(
+        f"/authority-transitions/{transition.transition_id}"
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["transition_id"] == str(transition.transition_id)
+    assert body["previous_authority_valid"] is True
+    assert body["current_authority_valid"] is False
+
+    occurred_at = datetime.fromisoformat(
+        body["occurred_at"].replace("Z", "+00:00")
+    )
+
+    assert occurred_at == transition.occurred_at
+
+
+def test_get_authority_transition_returns_404_for_unknown_transition_id() -> None:
+    unknown_transition_id = uuid4()
+
+    response = client.get(
+        f"/authority-transitions/{unknown_transition_id}"
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Authority transition not found"
+    }
+
+
+def test_get_authority_transition_rejects_malformed_transition_id() -> None:
+    response = client.get("/authority-transitions/not-a-uuid")
+
+    assert response.status_code == 422
+
+
+def test_setting_same_authority_value_creates_no_transition() -> None:
+    transition = set_current_runtime_state(authority_valid=True)
+
+    assert transition is None
+    assert authority_transitions == {}
+
+
+def test_retained_authority_transition_is_stable_after_later_change() -> None:
+    first_transition = set_current_runtime_state(authority_valid=False)
+
+    assert first_transition is not None
+
+    first_transition_id = first_transition.transition_id
+    first_occurred_at = first_transition.occurred_at
+
+    second_transition = set_current_runtime_state(authority_valid=True)
+
+    assert second_transition is not None
+    assert second_transition.transition_id != first_transition_id
+    assert second_transition.previous_authority_valid is False
+    assert second_transition.current_authority_valid is True
+
+    response = client.get(
+        f"/authority-transitions/{first_transition_id}"
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["transition_id"] == str(first_transition_id)
+    assert body["previous_authority_valid"] is True
+    assert body["current_authority_valid"] is False
+
+    retrieved_occurred_at = datetime.fromisoformat(
+        body["occurred_at"].replace("Z", "+00:00")
+    )
+
+    assert retrieved_occurred_at == first_occurred_at
+
+
+def test_decide_rejects_caller_supplied_authority_transition() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "authority_transition": {
+                "transition_id": str(uuid4()),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "previous_authority_valid": True,
+                "current_authority_valid": False,
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert response.status_code == 422
