@@ -329,12 +329,3 @@ def test_get_record_rejects_malformed_record_id() -> None:
     response = client.get("/records/not-a-uuid")
 
     assert response.status_code == 422
-
-
-
-
-
-
-
-
-
