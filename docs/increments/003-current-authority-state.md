@@ -1,6 +1,6 @@
 # Increment 003: Current Authority State
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -26,11 +26,11 @@ The API accepts a valid authority state and rejects malformed or missing authori
 
 ## Acceptance Criteria
 
-* [] Current runtime authority state can be represented explicitly.
-* [] `authority_valid` accepts boolean values.
-* [] A valid request containing runtime state is accepted.
-* [] Missing or malformed runtime authority state is rejected.
-* [] Automated tests cover valid and invalid runtime state input.
+* [x] Current runtime authority state can be represented explicitly.
+* [x] `authority_valid` accepts boolean values.
+* [x] A valid request containing runtime state is accepted.
+* [x] Missing or malformed runtime authority state is rejected.
+* [x] Automated tests cover valid and invalid runtime state input.
 
 ## Out of Scope
 
