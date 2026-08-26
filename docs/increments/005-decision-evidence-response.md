@@ -1,6 +1,6 @@
 # Increment 005: Decision Evidence Response
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -12,29 +12,16 @@ The uncertainty being removed is:
 
 ## Observable Behavior
 
-A full revalidation with matching authority should return evidence resembling:
+A full revalidation with matching authority returns:
 
-```json
-{
-  "outcome": "PROCEED",
-  "evidence": {
-    "action_proposal": "send customer notification",
-    "prior_decision_id": "decision-123",
-    "revalidation_mode": "full",
-    "obligation_evaluations": [
-      {
-        "obligation_id": "authority-1",
-        "kind": "authority_valid",
-        "expected": true,
-        "current": true,
-        "result": "MATCH"
-      }
-    ]
-  }
-}
+```text
+expected = true
+current = true
+result = MATCH
+outcome = PROCEED
 ```
 
-An authority mismatch should record:
+An authority mismatch returns:
 
 ```text
 expected = true
@@ -46,23 +33,45 @@ outcome = HOLD
 For `revalidation_mode: "none"`:
 
 ```text
+current = null
 result = NOT_EVALUATED
 outcome = PROCEED
 ```
 
-`NOT_EVALUATED` is distinct from `MATCH`. A skipped governance check must not be represented as a successful evaluation.
+`NOT_EVALUATED` is distinct from `MATCH`. A skipped check is not represented as a successful evaluation.
 
 ## Acceptance Criteria
 
-- [ ] Decision responses include structured evidence.
-- [ ] Evidence identifies the action proposal and prior decision.
-- [ ] Evidence records the revalidation mode.
-- [ ] Full revalidation records expected and current authority state.
-- [ ] Matching authority records `MATCH`.
-- [ ] Mismatching authority records `MISMATCH`.
-- [ ] Skipped revalidation records `NOT_EVALUATED`.
-- [ ] Existing `PROCEED` and `HOLD` behavior remains unchanged.
-- [ ] Automated tests verify evidence for each decision path.
+- [x] Decision responses include structured evidence.
+- [x] Evidence identifies the action proposal and prior decision.
+- [x] Evidence records the revalidation mode.
+- [x] Full revalidation records expected and current authority state.
+- [x] Matching authority records `MATCH`.
+- [x] Mismatching authority records `MISMATCH`.
+- [x] Skipped revalidation records `NOT_EVALUATED`.
+- [x] Existing `PROCEED` and `HOLD` behavior remains unchanged.
+- [x] Automated tests verify evidence for each decision path.
+
+## Verification
+
+Command:
+
+```bash
+python -m pytest -v
+```
+
+Observed result:
+
+```text
+8 passed in 0.19s
+```
+
+Verified behaviors:
+
+- matching authority returns `PROCEED` with `MATCH` evidence
+- mismatching authority returns `HOLD` with `MISMATCH` evidence
+- skipped revalidation returns `PROCEED` with `NOT_EVALUATED` evidence
+- existing request-validation failures remain covered
 
 ## Out of Scope
 
@@ -82,8 +91,8 @@ The evidence is returned synchronously with the API response and is not persiste
 
 The current runtime authority value is still supplied by the caller.
 
-This increment provides structured evidence for the implemented comparison only. It is not yet a complete evidence-plane implementation or proof that the decision was correct.
+This increment provides structured evidence for the implemented comparison only. It is not a complete evidence-plane implementation or proof that the decision was correct.
 
 ## Next Step
 
-Implement the minimal evidence response for `MATCH`, `MISMATCH`, and `NOT_EVALUATED`.
+Introduce a stable decision/evidence record identity and minimal metadata so individual decisions can be referenced and reconstructed across runs.
