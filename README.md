@@ -53,6 +53,10 @@ For `revalidation_mode: "none"`, the authority obligation is not evaluated and t
 
 The caller no longer supplies the runtime authority state used for the governance decision. Current authority is obtained through a server-side dependency.
 
+The test harness can also create a controlled process-local authority transition before execution-time evaluation. Under the tested `true` to `false` transition, full revalidation observes the changed value and returns `MISMATCH` and `HOLD`, while the no-revalidation baseline leaves the obligation `NOT_EVALUATED` and returns `PROCEED`.
+
+The transition itself is established by the controlled test procedure. The retained decision evidence records the expected authority condition and the execution-time value when evaluated, but it does not currently retain the earlier authority value or the mutation event.
+
 The implementation also returns structured evidence for the decision and retains the resulting record in process-local memory so it can be retrieved by `record_id`.
 
 This is a reference implementation for controlled experiments. It is not evidence that the governance mechanism is complete, correct, or suitable for production use.
@@ -255,7 +259,7 @@ python -m pytest -v
 Current verified test suite:
 
 ```text
-11 passed
+13 passed
 ```
 
 The tests currently cover:
@@ -271,6 +275,8 @@ The tests currently cover:
 - empty obligation sets
 - decision record retrieval
 - unknown and malformed record identifiers
+- controlled authority change before full revalidation
+- equivalent authority-change scenario without revalidation
 
 ## Continuous Integration
 
@@ -299,6 +305,7 @@ python -m pytest -v
 006  Decision record metadata
 007  Process-local decision record retrieval
 008  Authority source boundary
+009  Authority change revalidation
 ```
 
 Detailed increment records are under:
@@ -323,7 +330,8 @@ track-a-runtime-validity/
 │       ├── 005-decision-evidence-response.md
 │       ├── 006-decision-record-metadata.md
 │       ├── 007-decision-record-retrieval.md
-│       └── 008-authority-source-boundary.md
+│       ├── 008-authority-source-boundary.md
+│       └── 009-authority-change-revalidation.md
 ├── src/
 │   └── track_a/
 │       ├── __init__.py
@@ -351,10 +359,14 @@ The implementation currently provides:
 - UUID and UTC record metadata
 - process-local decision record retention and retrieval
 - automated tests and GitHub Actions CI
+- controlled process-local authority-state transitions for experimental tests
+- comparison of full revalidation against a no-revalidation authority-change baseline
 
 ## Current Limitations
 
 The current authority source is process-local.
+
+The retained decision record does not currently contain the authority mutation event or the earlier process-local authority value. The controlled test procedure establishes that temporal transition.
 
 The implementation does not yet establish that authority state came from an authenticated or independently authoritative enterprise source such as an IAM, delegation, credential, or policy system.
 
@@ -382,7 +394,7 @@ Structured evidence records what this implementation evaluated. It does not prov
 
 Track A is an engineering reference implementation used to test hypotheses about runtime validity and revalidation.
 
-The current implementation demonstrates that a prior authority obligation can be evaluated against separately sourced runtime state and that the resulting decision and evaluation can be recorded.
+The current implementation demonstrates a bounded engineering behavior: under a controlled process-local authority change from valid to invalid, full revalidation observes the changed state and produces MISMATCH and HOLD, while the no-revalidation baseline leaves the authority obligation NOT_EVALUATED and returns PROCEED.
 
 It does not establish that this mechanism is sufficient for runtime governance generally, that `authority_valid` is a complete representation of authority, or that `HOLD` is the correct response to every authority change.
 
