@@ -18,8 +18,10 @@ class PriorDecision(BaseModel):
     outcome: Literal["PROCEED"]
     obligations: list[Obligation] = Field(min_length=1)
 
+
 class RuntimeState(BaseModel):
     authority_valid: StrictBool
+
 
 class DecisionRequest(BaseModel):
     action_proposal: str
@@ -30,4 +32,12 @@ class DecisionRequest(BaseModel):
 
 @app.post("/decide")
 def decide(request: DecisionRequest) -> dict[str, str]:
+    if request.revalidation_mode == "full":
+        for obligation in request.prior_decision.obligations:
+            if (
+                obligation.kind == "authority_valid"
+                and request.runtime_state.authority_valid != obligation.expected
+            ):
+                return {"outcome": "HOLD"}
+
     return {"outcome": "PROCEED"}

@@ -6,7 +6,7 @@ from track_a.api import app
 client = TestClient(app)
 
 
-def test_decide_returns_proceed_for_valid_request() -> None:
+def test_decide_returns_proceed_when_authority_matches() -> None:
     response = client.post(
         "/decide",
         json={
@@ -33,7 +33,7 @@ def test_decide_returns_proceed_for_valid_request() -> None:
     assert response.json() == {"outcome": "PROCEED"}
 
 
-def test_decide_accepts_false_authority_state() -> None:
+def test_decide_returns_hold_when_authority_no_longer_matches() -> None:
     response = client.post(
         "/decide",
         json={
@@ -57,6 +57,34 @@ def test_decide_accepts_false_authority_state() -> None:
     )
 
     assert response.status_code == 200
+    assert response.json() == {"outcome": "HOLD"}
+
+
+def test_decide_skips_authority_comparison_when_revalidation_is_none() -> None:
+    response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "send customer notification",
+            "prior_decision": {
+                "decision_id": "decision-123",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-1",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "runtime_state": {
+                "authority_valid": False,
+            },
+            "revalidation_mode": "none",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"outcome": "PROCEED"}
 
 
 def test_decide_rejects_missing_runtime_state() -> None:
