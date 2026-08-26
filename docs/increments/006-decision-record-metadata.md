@@ -1,6 +1,6 @@
 # Increment 006: Decision Record Metadata
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -12,34 +12,49 @@ The uncertainty being removed is:
 
 ## Observable Behavior
 
-Each decision response includes metadata resembling:
+Each valid decision response includes:
 
-```json
-{
-  "outcome": "PROCEED",
-  "evidence": {
-    "record_id": "4c7729c4-...",
-    "created_at": "2026-08-25T22:30:00Z",
-    "schema_version": "1",
-    "action_proposal": "send customer notification",
-    "prior_decision_id": "decision-123",
-    "revalidation_mode": "full",
-    "obligation_evaluations": []
-  }
-}
+```text
+record_id = valid UUID
+created_at = timezone-aware UTC timestamp
+schema_version = "1"
 ```
 
-The metadata is generated for every valid decision response, including `PROCEED` and `HOLD`.
+The metadata is generated for both `PROCEED` and `HOLD` responses.
 
 ## Acceptance Criteria
 
-- [ ] Each decision response contains a `record_id`.
-- [ ] `record_id` is a valid UUID.
-- [ ] Each decision response contains an explicit creation timestamp.
-- [ ] The timestamp is timezone-aware UTC.
-- [ ] Each decision response identifies its evidence schema version.
-- [ ] Existing decision and evidence behavior remains unchanged.
-- [ ] Automated tests validate the metadata without depending on fixed UUID or timestamp values.
+- [x] Each decision response contains a `record_id`.
+- [x] `record_id` is a valid UUID.
+- [x] Each decision response contains an explicit creation timestamp.
+- [x] The timestamp is timezone-aware UTC.
+- [x] Each decision response identifies its evidence schema version.
+- [x] Existing decision and evidence behavior remains unchanged.
+- [x] Automated tests validate the metadata without depending on fixed UUID or timestamp values.
+
+## Verification
+
+Command:
+
+```bash
+python -m pytest -v
+```
+
+Observed result:
+
+```text
+9 passed in 0.19s
+```
+
+Verified behaviors:
+
+- generated `record_id` parses as a UUID
+- generated timestamp is timezone-aware UTC
+- evidence schema version is `"1"`
+- matching authority still returns `PROCEED`
+- mismatching authority still returns `HOLD`
+- skipped revalidation still records `NOT_EVALUATED`
+- existing request-validation failures remain covered
 
 ## Out of Scope
 
@@ -63,4 +78,4 @@ The schema version describes the evidence structure only. It does not represent 
 
 ## Next Step
 
-Implement UUID record identity, UTC creation time, and evidence schema version.
+Persist decision records so a previously returned `record_id` can be retrieved after the decision request completes.
