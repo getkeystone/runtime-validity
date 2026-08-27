@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 
-app = FastAPI(title="Track A Runtime Validity")
+app = FastAPI(title="Runtime Validity - Track A")
 
 
 class Obligation(BaseModel):

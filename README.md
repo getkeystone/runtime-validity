@@ -1,4 +1,4 @@
-# Track A Runtime Validity
+# Runtime Validity - Track A
 
 Track A is a bounded experimental component of the broader Governed Execution research program and reference architecture.
 
@@ -127,8 +127,8 @@ Python 3.12 or newer.
 Clone the repository and enter the project directory:
 
 ```bash
-git clone https://github.com/getkeystone/track-a-runtime-validity.git
-cd track-a-runtime-validity
+git clone https://github.com/getkeystone/runtime-validity.git
+cd runtime-validity
 ```
 
 Create a virtual environment:
@@ -154,7 +154,7 @@ python -m pip install -e ".[dev]"
 Start the development server:
 
 ```bash
-python -m uvicorn track_a.api:app --reload
+python -m uvicorn runtime_validity.api:app --reload
 ```
 
 The API is available at:
@@ -499,7 +499,7 @@ The workflow installs the project with its development dependencies and runs:
 python -m pytest -v
 ```
 
-Increment 010 remains `In Progress` until its pull-request CI verification succeeds.
+Increment 010 is complete after local verification and successful GitHub Actions verification on `main`.
 
 ## Current Increment Progression
 
@@ -525,7 +525,7 @@ docs/increments/
 ## Project Structure
 
 ```text
-track-a-runtime-validity/
+runtime-validity/
 ├── .github/
 │   └── workflows/
 │       └── test.yml
@@ -542,7 +542,7 @@ track-a-runtime-validity/
 │       ├── 009-authority-change-revalidation.md
 │       └── 010-authority-transition-evidence.md
 ├── src/
-│   └── track_a/
+│   └── runtime_validity/
 │       ├── __init__.py
 │       └── api.py
 ├── tests/
