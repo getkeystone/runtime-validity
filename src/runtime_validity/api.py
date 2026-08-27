@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
+from hmac import compare_digest
+import os
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 
@@ -30,6 +32,12 @@ class AuthorityTransition(BaseModel):
     occurred_at: datetime
     previous_authority_valid: StrictBool
     current_authority_valid: StrictBool
+
+
+class ExperimentalAuthorityStateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    authority_valid: StrictBool
 
 
 class DecisionRequest(BaseModel):
@@ -99,6 +107,43 @@ def set_current_runtime_state(
     server_runtime_state = next_runtime_state
 
     return transition
+
+
+def require_experimental_authority_control(
+    x_experimental_control_token: str | None = Header(default=None),
+) -> None:
+    if os.getenv("RUNTIME_VALIDITY_ENABLE_EXPERIMENTAL_CONTROL") != "1":
+        raise HTTPException(
+            status_code=403,
+            detail="Experimental authority control is disabled",
+        )
+
+    expected_token = os.getenv(
+        "RUNTIME_VALIDITY_EXPERIMENTAL_CONTROL_TOKEN"
+    )
+
+    if (
+        expected_token is None
+        or x_experimental_control_token is None
+        or not compare_digest(
+            x_experimental_control_token,
+            expected_token,
+        )
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid experimental control token",
+        )
+
+
+@app.post("/experimental/authority-state")
+def set_experimental_authority_state(
+    request: ExperimentalAuthorityStateRequest,
+    _control: None = Depends(require_experimental_authority_control),
+) -> AuthorityTransition | None:
+    return set_current_runtime_state(
+        authority_valid=request.authority_valid,
+    )
 
 
 @app.post("/decide")

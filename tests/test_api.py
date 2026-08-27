@@ -516,3 +516,123 @@ def test_decide_rejects_caller_supplied_authority_transition() -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_experimental_authority_control_is_disabled_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(
+        "RUNTIME_VALIDITY_ENABLE_EXPERIMENTAL_CONTROL",
+        raising=False,
+    )
+    monkeypatch.delenv(
+        "RUNTIME_VALIDITY_EXPERIMENTAL_CONTROL_TOKEN",
+        raising=False,
+    )
+
+    response = client.post(
+        "/experimental/authority-state",
+        json={"authority_valid": False},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Experimental authority control is disabled"
+    }
+    assert get_current_runtime_state().authority_valid is True
+
+
+def test_experimental_authority_control_rejects_invalid_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "RUNTIME_VALIDITY_ENABLE_EXPERIMENTAL_CONTROL",
+        "1",
+    )
+    monkeypatch.setenv(
+        "RUNTIME_VALIDITY_EXPERIMENTAL_CONTROL_TOKEN",
+        "test-control-token",
+    )
+
+    response = client.post(
+        "/experimental/authority-state",
+        headers={
+            "X-Experimental-Control-Token": "wrong-token",
+        },
+        json={"authority_valid": False},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Invalid experimental control token"
+    }
+    assert get_current_runtime_state().authority_valid is True
+
+
+def test_experimental_authority_control_drives_live_revalidation_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "RUNTIME_VALIDITY_ENABLE_EXPERIMENTAL_CONTROL",
+        "1",
+    )
+    monkeypatch.setenv(
+        "RUNTIME_VALIDITY_EXPERIMENTAL_CONTROL_TOKEN",
+        "test-control-token",
+    )
+
+    transition_response = client.post(
+        "/experimental/authority-state",
+        headers={
+            "X-Experimental-Control-Token": "test-control-token",
+        },
+        json={"authority_valid": False},
+    )
+
+    assert transition_response.status_code == 200
+
+    transition = transition_response.json()
+
+    UUID(transition["transition_id"])
+    assert transition["previous_authority_valid"] is True
+    assert transition["current_authority_valid"] is False
+
+    retrieval_response = client.get(
+        f"/authority-transitions/{transition['transition_id']}"
+    )
+
+    assert retrieval_response.status_code == 200
+    assert retrieval_response.json() == transition
+
+    decision_response = client.post(
+        "/decide",
+        json={
+            "action_proposal": "demo consequential action",
+            "prior_decision": {
+                "decision_id": "demo-prior-001",
+                "outcome": "PROCEED",
+                "obligations": [
+                    {
+                        "obligation_id": "authority-valid-001",
+                        "kind": "authority_valid",
+                        "expected": True,
+                    }
+                ],
+            },
+            "revalidation_mode": "full",
+        },
+    )
+
+    assert decision_response.status_code == 200
+    assert decision_response.json()["outcome"] == "HOLD"
+    assert decision_response.json()["evidence"][
+        "obligation_evaluations"
+    ] == [
+        {
+            "obligation_id": "authority-valid-001",
+            "kind": "authority_valid",
+            "expected": True,
+            "current": False,
+            "result": "MISMATCH",
+        }
+    ]
