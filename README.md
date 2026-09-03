@@ -1,8 +1,8 @@
 # Runtime Validity - Track A
 
-Track A is a bounded experimental component of the broader Governed Execution research program and reference architecture.
+Runtime Validity is the bounded reference implementation for research identifier Track A within the broader Governed Execution research program.
 
-This repository isolates one research question: runtime validity and revalidation of prior governance decisions before consequential action.
+Track A's controlling research question is stated in full under [Track A Research Question](#track-a-research-question) below. In short, it studies which controlled runtime interventions invalidate which obligations in a prior decision's justification, and under what conditions revalidating only the affected obligations preserves the same disposition as fully reevaluating the decision, at lower revalidation work.
 
 Track A is deliberately developed and evaluated as a narrow component so its behavior, assumptions, failure modes, and evidence can be examined separately before broader integration.
 
@@ -21,20 +21,42 @@ The working architecture separates:
 
 Individual tracks isolate bounded mechanisms or research questions so they can be implemented and tested independently before composition.
 
-This repository therefore serves two roles:
+This repository is a bounded experimental artifact for Track A's runtime-validity research. A separate experiment/evaluation environment, `governed-execution-lab`, is where controlled Track A experiments are expected to run; this repository does not itself claim that such composition has already occurred.
 
-1. A bounded experimental artifact for runtime-validity research.
-2. A candidate component for later composition into a broader Governed Execution Runtime.
-
-Integration would not imply that results from Track A automatically generalize to other components.
+A future composed Governed Execution Runtime does not currently exist. Future composition of Runtime Validity with other governed-execution mechanisms is separate work that would require its own integration and evaluation; it is not implied by anything in this repository.
 
 Composition, interaction effects, failure modes, and portability require separate evaluation.
+
+## Track A Research Question
+
+Orchestration determines how work proceeds. Governance determines whether the intended consequence remains justified to proceed. Track A studies a specific piece of that governance question: whether a justification that was valid when a decision was made is still valid when the decision's consequence is about to execute.
+
+The controlling Track A research question is:
+
+> Given a prior decision justification composed of heterogeneous governance obligations, which controlled runtime interventions invalidate which obligations, and under what conditions does obligation-scoped revalidation preserve the same policy-expected disposition as full commit-boundary reevaluation with lower revalidation work?
+
+This is a research question, not yet a research conclusion. Research priority within it is ordered as follows, and the ordering is deliberate:
+
+1. **Primary: intervention-to-obligation invalidation mapping.** Which controlled runtime interventions invalidate which obligations?
+2. **Secondary: disposition preservation.** When does obligation-scoped revalidation produce the same policy-expected disposition as full commit-boundary reevaluation of the same decision?
+3. **Tertiary, conditional on (2): revalidation work and latency.** Only once equivalent disposition is established does it become meaningful to ask whether scoped revalidation requires less work or less time than full reevaluation.
+
+Revalidation work and latency are not the primary Track A contribution. Neither is transition evidence, nor decision-to-state binding: both are candidate enabling mechanisms for later controlled experiments on the primary and secondary questions, not substitutes for them. See [Relationship of the Current Implementation to the Track A Research Question](#relationship-of-the-current-implementation-to-the-track-a-research-question) for what the current repository does and does not yet evaluate against this question.
+
+Two terms in the research question carry specific meaning here and should not be collapsed into each other:
+
+- **Permission governance** asks who is allowed to do what.
+- **Decision justification** asks why this particular decision was appropriate for this context, evidence, affected party, and consequence level.
+
+The research question above concerns a prior *decision justification* composed of heterogeneous obligations, not a single permission bit. The current implementation, described next, does not yet model that richer justification: it models one bounded obligation representation.
+
+A closely related idea, useful background for the question above: **currency** asks whether the original justification still legitimately authorizes the intended consequence at the point of execution. This repository does not currently operationalize currency as a measured experimental variable; it is offered here only to explain the shape of the question.
 
 ## Current Status
 
 Early engineering and research implementation.
 
-The current implementation evaluates a narrow runtime-governance case:
+The current implementation evaluates one bounded case toward the Track A research question above, not the question itself: a single Boolean obligation, one controlled intervention (a process-local authority change), and a comparison against a no-revalidation baseline rather than against full commit-boundary reevaluation of a heterogeneous decision. See [Relationship of the Current Implementation to the Track A Research Question](#relationship-of-the-current-implementation-to-the-track-a-research-question) below for the full boundary.
 
 ```text
 prior decision
@@ -117,6 +139,46 @@ The implementation does not yet establish that a particular decision evaluated t
 This is a reference implementation for controlled experiments.
 
 It is not evidence that the governance mechanism is complete, correct, independently validated, or suitable for production use.
+
+## Relationship of the Current Implementation to the Track A Research Question
+
+Increments 001 through 010 construct prerequisites and one bounded experimental case. Increment 011 is in-progress research toward grounding a future obligation universe. Neither constitutes evaluation of the full Track A research question stated above.
+
+| Increment(s) | What it establishes |
+|---|---|
+| 001 | Executable decision/action-admission boundary (`POST /decide`). |
+| 002 | Representation of a prior decision's obligations. |
+| 003 | Representation of current process-local authority state. |
+| 004 | Comparison between a prior obligation and current state. |
+| 005-007 | Structured decision evidence, record metadata, process-local retention and retrieval. |
+| 008 | Server-controlled authority-source boundary (the caller cannot supply the state used to evaluate its own obligation). |
+| 009 | A controlled authority change and a comparison of full revalidation against no revalidation. |
+| 010 | Process-local authority-transition evidence, retained and retrievable separately from decision evidence. |
+| 011 (in progress) | Prior-art research toward grounding an initial heterogeneous obligation universe in published mechanisms. No obligation set has been selected. No evaluated result exists yet. |
+
+These increments construct mechanisms and research prerequisites for Track A. They do not constitute the Track A invalidation-mapping experiment.
+
+As of this increment, Runtime Validity has **not yet evaluated**:
+
+1. heterogeneous governance obligations (only one Boolean obligation kind, `authority_valid`, is implemented);
+2. a final, externally grounded obligation universe (Increment 011 is in progress toward one, not complete);
+3. multiple controlled runtime intervention classes (only one controlled intervention, a process-local authority change, is implemented);
+4. intervention-to-obligation invalidation mappings (the Track A primary question);
+5. obligation-scoped or selective revalidation (not implemented; only whole-decision full revalidation and no revalidation exist);
+6. disposition preservation between scoped and full commit-boundary revalidation (the Track A secondary question);
+7. a policy-expected-disposition oracle defined independently of the mechanism under test;
+8. revalidation-work reduction from scoped revalidation;
+9. latency differences between scoped and full revalidation;
+10. conditions under which scoped revalidation would be unsafe or disposition-divergent;
+11. authentic external authority revocation;
+12. production authentication or authorization;
+13. independently witnessed transition evidence;
+14. durable persistence of decision or transition records;
+15. structural binding between a transition record and the exact decision state it was evaluated against;
+16. distributed ordering or concurrency guarantees;
+17. real external consequence enforcement.
+
+Items 1 through 10 are research questions and experiments not yet conducted, not defects in the current implementation: Increments 001-010 were not designed to answer them, and Increment 011 is in-progress groundwork for later addressing the first two.
 
 ## Requirements
 
@@ -449,10 +511,10 @@ python -m pytest -v
 Current locally verified test suite:
 
 ```text
-20 passed
+23 passed
 ```
 
-The suite retains the 13 tests from Increments 001 through 009 and adds coverage for Increment 010.
+The suite retains the 13 tests from Increments 001 through 009, adds 7 tests for Increment 010, and adds 3 further tests for a guarded, disabled-by-default experimental authority-control endpoint added after Increment 010.
 
 Current coverage includes:
 
@@ -478,10 +540,13 @@ Current coverage includes:
 - retained transition stability after a later authority change
 - rejection of caller-supplied transition evidence
 - transition-store isolation between tests
+- the experimental authority-control endpoint is disabled unless explicitly enabled
+- the experimental authority-control endpoint rejects an invalid control token
+- the experimental authority-control endpoint, when enabled with a valid token, drives the same live revalidation path exercised above
 
-The 20-test result is an internal evaluation result.
+The 23-test result is an internal evaluation result for this commit.
 
-It is not independent validation.
+It is not independent validation, and it is not evidence toward the Track A research question above: none of these tests exercise more than one obligation, more than one intervention class, or a comparison against full commit-boundary reevaluation of a heterogeneous decision.
 
 ## Continuous Integration
 
@@ -514,6 +579,8 @@ Increment 010 is complete after local verification and successful GitHub Actions
 008  Authority source boundary
 009  Authority change revalidation
 010  Authority transition evidence
+011  Externally grounded obligation universe (in progress; no evaluated result yet)
+012  Track A research alignment (this documentation increment)
 ```
 
 Detailed increment records are under:
@@ -540,7 +607,9 @@ runtime-validity/
 │       ├── 007-decision-record-retrieval.md
 │       ├── 008-authority-source-boundary.md
 │       ├── 009-authority-change-revalidation.md
-│       └── 010-authority-transition-evidence.md
+│       ├── 010-authority-transition-evidence.md
+│       ├── 011-externally-grounded-obligation-universe.md
+│       └── 012-track-a-research-alignment.md
 ├── src/
 │   └── runtime_validity/
 │       ├── __init__.py
@@ -636,7 +705,7 @@ It does not prove that the observed authority state was correct or that the resu
 
 ## Research Position
 
-Track A is an engineering reference implementation used to test bounded hypotheses about runtime validity, revalidation, and evidence.
+Track A is an engineering reference implementation used to test bounded hypotheses about runtime validity, revalidation, and evidence. See [Track A Research Question](#track-a-research-question) for the controlling question this work is building toward, and [Relationship of the Current Implementation to the Track A Research Question](#relationship-of-the-current-implementation-to-the-track-a-research-question) for the full list of what is not yet evaluated.
 
 The implementation currently supports two related engineering observations.
 
@@ -659,7 +728,9 @@ They do not establish:
 
 ## Next Research Question
 
-The next candidate experiment concerns decision-to-state binding:
+Decision-to-state binding is a candidate enabling engineering experiment for later Track A evaluation. It is not a replacement for the Track A invalidation-mapping research question stated in [Track A Research Question](#track-a-research-question); it is scaffolding that a later invalidation-mapping or disposition-preservation experiment may need.
+
+The candidate experiment concerns decision-to-state binding:
 
 > What retained evidence is required to establish that a specific execution-time governance decision evaluated a specific runtime state or transition representation?
 
@@ -676,6 +747,8 @@ transition reference
 ```
 
 The experiment should not assume that timestamp proximity, matching values, or knowledge from the test procedure establishes causality.
+
+This is not necessarily the next numbered increment. Increment 011 (obligation-universe grounding) is already in progress toward the Track A primary question and is independent of this one.
 
 ## License
 
