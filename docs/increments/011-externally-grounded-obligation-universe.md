@@ -236,7 +236,7 @@ Each entry carries: exact title, authors, year, the verified mechanism, the sour
 ### SAGE-Fin
 
 - Title: Context Is Not Authority: Structured Runtime Governance for Financial Market Agents
-- Authors: Rui Tang, Qiangqiang Liu, Yichi Zhang, Youwei Wang, Xi Chen, Chen Dong
+- Authors: Rui Tang, Qiangqiang Liu, Yichi Zhang, Youwei Yang, Xi Chen, Chen Dong (corrected from "Youwei Wang," recorded in error in an earlier pass of this file, against a direct re-fetch of the arXiv listing during this checkpoint)
 - Year: 2026 (v1 August 10, 2026; v2 August 17, 2026)
 - Identifier: arXiv:2608.09025 (primary category cs.AI; secondary cs.CR, stat.ML)
 - Verified mechanism: defines "coverage debt" as the set of required witnesses or validators that are missing, stale, unpromoted, or invalid for a candidate action — described in the paper as runtime state, not a footnote, that can downgrade commitment level, block execution authorization, or require clarification, repair, escalation, or human approval. Compiles proposals into typed, adapter-bound candidates and requires an exact-artifact receipt whose nominal type matches the consuming response, execution, or policy adapter before an effect is permitted.
@@ -322,12 +322,12 @@ Each candidate below is built only from what is already recorded and verified in
 
 | # | Candidate (provisional label) | Primary source | Current disposition |
 |---|---|---|---|
-| 1 | Policy-state currency | MasuGate (Peng & Wu 2026) | retain as candidate, overlap unresolved |
-| 2 | Witness/authorization freshness | CommitGuard (Santos-Grueiro 2026) | retain as candidate |
-| 3 | Causal/ordering priority | CommitGuard (Santos-Grueiro 2026) | retain as candidate, weaker for a first experiment |
-| 4 | Effect/action binding | CommitGuard (Santos-Grueiro 2026) | retain as candidate |
-| 5 | Target/commit eligibility | CommitGuard (Santos-Grueiro 2026) | retain as candidate |
-| 6 | Evidence/witness coverage sufficiency | SAGE-Fin (Tang et al. 2026) | retain as candidate, overlap with #2 unresolved |
+| 1 | Policy-state currency | MasuGate (Peng & Wu 2026) | retain as candidate, overlap with `authority_valid` unresolved (design decision pending, see analysis below) |
+| 2 | Witness/authorization freshness | CommitGuard (Santos-Grueiro 2026) | retain as candidate; source-verified this checkpoint; recommended to absorb Candidate 6's staleness sub-case |
+| 3 | Causal/ordering priority | CommitGuard (Santos-Grueiro 2026) | defer to a later Track A experiment (resolved this checkpoint) |
+| 4 | Effect/action binding | CommitGuard (Santos-Grueiro 2026) | retain as candidate; source-verified this checkpoint |
+| 5 | Target/commit eligibility | CommitGuard (Santos-Grueiro 2026) | retain as candidate; source-verified this checkpoint (source's own framing is "authorizing-path eligibility," slightly narrower than the label) |
+| 6 | Evidence/witness coverage sufficiency | SAGE-Fin (Tang et al. 2026) | retain as candidate, narrowed to the absence/type-binding sub-cases; staleness sub-case recommended to fold into Candidate 2 |
 | - | Whole-transaction policy compatibility | Ray 2004 (DKE) | baseline only |
 | - | Any-attribute-change ongoing reevaluation | Katt et al. 2008 | baseline only |
 | - | Inter-process concurrency dependency | Janicke et al. 2008 | later-track concern |
@@ -355,77 +355,156 @@ Six candidates are retained pending final selection. That is intentionally more 
 ### Candidate 2: Witness/authorization freshness
 
 - **Source:** CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487).
-- **Source mechanism:** one of four named heterogeneous conditions ("Freshness") checked at every protected commit in a durable-effect commit-time authorization.
-- **Source terminology:** "Freshness," "witness," "commit boundary."
-- **Condition that must hold:** the authorization witness relied upon is not older than the mechanism's freshness threshold at commit time.
-- **Provisional Track A normalized label:** witness/authorization freshness.
+- **Source mechanism:** one of four named heterogeneous conditions ("Freshness") checked at every protected commit in a durable-effect commit-time authorization. Re-read against the primary source (arXiv HTML) during this checkpoint, Section 3 ("Boundary Checks") and Table 3.
+- **Source terminology:** "Freshness," "witness," "commit boundary." Source's own boundary question: "is the witness that still licenses the effect current at commit?"
+- **Condition that must hold:** the witness (source examples: "live page, token, approval, or version") that licenses the effect is still current at commit time.
+- **Depends on:** a single named witness object (page, token, approval, or version), per Table 3.
+- **Invalidating event, per source:** "expiry, DOM mutation, version advance, revocation" (Table 3).
+- **Independently checkable, per source:** yes; the four conditions are checked as a set of independent boundary questions, not folded into one another, though the source does not give a symbolic-logic equation. Section 3 states plainly: "An externally consequential action is authorized only when all four checks hold at the boundary."
+- **Source-associated mitigation on failure:** "refresh the witness"; Section 6 also describes "pre-execution revalidation" that refreshes relevant state immediately before action execution.
+- **Provisional Track A normalized label:** witness/authorization freshness. The label is faithful to the source's own use of "Freshness."
 - **Candidate runtime witness:** a timestamp or age value attached to the authorization witness.
-- **Candidate invalidating intervention:** let time elapse past the freshness threshold, or administratively expire the witness, without changing the underlying authorization decision itself.
+- **Candidate invalidating intervention:** let time elapse past the freshness threshold, or administratively expire the witness (mirroring the source's own "expiry" invalidator), without changing the underlying authorization decision itself or removing the witness outright.
 - **Evaluation observability:** compare witness age at original decision time against witness age at revalidation time relative to a fixed threshold.
-- **Overlap / possible duplicate:** possible overlap with Candidate 6 (SAGE-Fin's coverage debt), which also treats "stale" witnesses as an invalidating condition. Not resolved whether these are the same dependency under two names or genuinely distinct (see Candidate 6 and "Matrix Review Before Final Selection").
-- **Track A relevance:** CommitGuard is the strongest available full-commit-boundary baseline exemplar: a real, heterogeneous, named multi-condition commit-time decision, exactly the shape Track A's full-reevaluation comparison arm needs. CommitGuard checks all four of its conditions every time; no mechanism in the reviewed material shows any of the four being selectively skipped or trusted. Using Freshness as a Track A candidate for selective revalidation would therefore not be replicating an existing selective mechanism; it would be a new application of a condition CommitGuard itself always fully rechecks.
+- **Overlap / possible duplicate:** partially resolved this checkpoint against Candidate 6 (SAGE-Fin's coverage debt). See "Freshness vs. coverage debt: source comparison" below for the detailed analysis. Summary: CommitGuard's Freshness corresponds closely to coverage debt's own "stale-witness" sub-case (a single witness aging past a recompute interval), but not to coverage debt's broader absence and type/binding sub-cases. The staleness sub-case of Candidate 6 should likely fold into this candidate; the remainder of Candidate 6 should not.
+- **Track A relevance:** CommitGuard is the strongest available full-commit-boundary baseline exemplar: a real, heterogeneous, named multi-condition commit-time decision, exactly the shape Track A's full-reevaluation comparison arm needs. The source confirms, in its own words, that all four conditions are checked every time ("single-condition checks are insufficient because different hazards break different boundary conditions," Section 6.2), with no mechanism shown for selectively skipping or trusting any of the four. Using Freshness as a Track A candidate for selective revalidation would therefore not be replicating an existing selective mechanism; it would be a new application of a condition CommitGuard itself always fully rechecks.
 - **Current disposition:** retain as candidate.
-- **Unresolved interpretation:** this file records only the name "Freshness" and the general commit-time-authorization framing from CommitGuard; it does not record CommitGuard's own formal definition of the freshness threshold or how it is computed. That detail requires re-reading the primary source before this candidate can be operationalized, and is not assumed here.
+- **Unresolved interpretation:** the source gives named invalidators and a mitigation but not a formal threshold-computation rule (e.g., how the freshness interval itself is chosen); that operational detail is not recorded in the source material fetched for this checkpoint and would need a further, narrower read of the source before implementation.
 
 ### Candidate 3: Causal/ordering priority
 
 - **Source:** CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487).
-- **Source mechanism:** one of the same four named conditions ("Causal priority"), checked at every protected commit.
-- **Source terminology:** "Causal priority," "commit boundary."
-- **Condition that must hold:** the authorization event maintains the required ordering relationship relative to other relevant events before the commit is permitted (for example, that no intervening event should have preceded and altered it).
-- **Provisional Track A normalized label:** causal/ordering priority.
-- **Candidate runtime witness:** an event sequence or ordering marker associated with the authorization and with candidate intervening events.
-- **Candidate invalidating intervention:** insert an intervening event that violates the required ordering between the original decision and the commit.
-- **Evaluation observability:** compare recorded ordering markers; requires an explicit event log or sequence mechanism that Runtime Validity's current bounded implementation does not have.
+- **Source mechanism:** one of the same four named conditions ("Causal priority"), checked at every protected commit. Re-read against the primary source during this checkpoint, Section 3 ("Boundary Checks" and "Why endpoint correctness can diverge") and Table 3.
+- **Source terminology:** "Causal priority," "commit boundary." Source's own boundary question: "did all required predecessors complete before the effect, with no unresolved dependency still pending?"
+- **Condition that must hold:** all required predecessor steps completed before the effect, with no unresolved dependency still pending.
+- **Depends on:** "predecessor completion or barrier token" (Table 3), an inherently multi-step, relational witness, not a single value.
+- **Invalidating event, per source:** "callback reorder, missing await, late worker result" (Table 3): all multi-event phenomena describing a violation of expected step ordering, not a single value change.
+- **Independently checkable, per source:** yes, as one of the four independent boundary checks; but its own witness (a barrier token or predecessor-completion signal) is intrinsically about the relationship between two or more events, unlike the single-value witnesses the other three conditions use.
+- **Source-associated mitigation on failure:** "wait for the predecessor," or replanning to reestablish proper dependency ordering (Section 3).
+- **Provisional Track A normalized label:** causal/ordering priority. The label is faithful to the source's "Causal priority" term.
+- **Candidate runtime witness:** an event sequence or ordering marker (a barrier token, per the source) associated with the authorization and with candidate intervening events.
+- **Candidate invalidating intervention:** insert an intervening event that violates the required ordering between the original decision and the commit (mirroring the source's own "callback reorder" or "late worker result" invalidators).
+- **Evaluation observability:** compare recorded ordering markers; requires an explicit barrier-token or sequence mechanism that Runtime Validity's current bounded implementation does not have.
 - **Overlap / possible duplicate:** none identified against the other candidates; ordering is a distinct dimension from state-value comparison.
-- **Track A relevance:** grounded in the same strong full-commit-boundary baseline as Candidate 2, but weaker for a first controlled experiment: ordering conditions are inherently about relationships between multiple events, which is structurally closer to Janicke et al. 2008's and Katt et al. 2008's concerns (concurrency and session-state ordering) than to a single-decision, single-intervention Boolean-style predicate. Retaining it risks Track A absorbing a later-track ordering/concurrency question under its own name.
-- **Current disposition:** retain as candidate, weaker for a first experiment.
-- **Unresolved interpretation:** as with Candidate 2, only the name and general framing are recorded here; CommitGuard's exact formal definition of causal priority requires re-reading the primary source. Additionally unresolved: whether a single-decision experiment can operationalize an ordering condition at all without first building a minimal event-sequencing mechanism, which is itself out of this increment's scope.
+- **Track A relevance:** grounded in the same strong full-commit-boundary baseline as Candidate 2. See "Causal/ordering priority: first-experiment disposition" below for the resolved disposition.
+- **Current disposition:** defer to a later Track A experiment (resolved this checkpoint; see below).
+- **Unresolved interpretation:** the source's own witness for this condition, a "predecessor completion or barrier token," presupposes some minimal notion of ordered steps or a barrier mechanism. Whether a single-decision, single-intervention experiment can represent that witness without building at least a minimal sequencing mechanism is the open question resolved (as: no, not without added infrastructure) in the disposition analysis below.
 
 ### Candidate 4: Effect/action binding
 
 - **Source:** CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487).
-- **Source mechanism:** one of the same four named conditions ("Effect binding"), checked at every protected commit.
-- **Source terminology:** "Effect binding," "binding," "commit boundary."
-- **Condition that must hold:** the specific effect or action being committed matches the effect or action that was actually authorized; the authorization must not be reusable for a substituted effect.
-- **Provisional Track A normalized label:** effect/action binding.
-- **Candidate runtime witness:** an effect or action identifier recorded at decision time.
-- **Candidate invalidating intervention:** substitute a different effect or action at commit time while presenting the same prior decision.
-- **Evaluation observability:** compare the effect/action identifier recorded at decision time against the one presented at commit/revalidation time. A clean equality check; no additional infrastructure beyond an identifier field appears to be required.
-- **Overlap / possible duplicate:** none identified against the other candidates.
+- **Source mechanism:** one of the same four named conditions ("Effect binding"), checked at every protected commit. Re-read against the primary source during this checkpoint, Section 3 ("Boundary Checks") and Table 3.
+- **Source terminology:** "Effect binding," "binding," "commit boundary." Source's own boundary question: "does the witness still name the same concrete target, version, ticket, page instance, or branch that the effect makes durable?"
+- **Condition that must hold:** the witness still names the same concrete target (version, ticket, page instance, or branch) that the effect is about to make durable; the authorization must not be reusable for a substituted target.
+- **Depends on:** "target identifier bound to witness" (Table 3), a single identifier-match witness.
+- **Invalidating event, per source:** "retarget, repaint, rebinding, branch retarget" (Table 3).
+- **Independently checkable, per source:** yes, as one of the four independent boundary checks; a clean identifier-equality question.
+- **Source-associated mitigation on failure:** "rebind the target," or "version binding or reservation ties the effect to a concrete version" (Sections 3 and 6).
+- **Provisional Track A normalized label:** effect/action binding. Faithful to the source's "Effect binding" term.
+- **Candidate runtime witness:** an effect or target identifier recorded at decision time.
+- **Candidate invalidating intervention:** substitute a different effect or target identifier at commit time while presenting the same prior decision (mirroring the source's own "retarget" invalidator).
+- **Evaluation observability:** compare the effect/target identifier recorded at decision time against the one presented at commit/revalidation time. A clean equality check; no additional infrastructure beyond an identifier field appears to be required.
+- **Overlap / possible duplicate:** none identified against the other candidates, contingent on experimental design keeping the substituted target's own eligibility state constant (see the experimental-distinctness table below).
 - **Track A relevance:** same full-commit-boundary baseline as Candidates 2 and 3; CommitGuard always rechecks this condition, so a Track A experiment selectively revalidating it (or trusting it while rechecking others) would not replicate an existing selective mechanism.
 - **Current disposition:** retain as candidate.
-- **Unresolved interpretation:** only the name and general framing are recorded here; CommitGuard's exact formal definition of effect binding requires re-reading the primary source before final operationalization.
+- **Unresolved interpretation:** none material; the source's own definition is specific enough (identifier match against "target, version, ticket, page instance, or branch") to operationalize as recorded here.
 
 ### Candidate 5: Target/commit eligibility
 
 - **Source:** CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487).
-- **Source mechanism:** one of the same four named conditions ("Commit eligibility"), checked at every protected commit.
-- **Source terminology:** "Commit eligibility," "commit boundary."
-- **Condition that must hold:** the target or environment the effect would act upon remains in a state eligible to receive that effect at commit time.
-- **Provisional Track A normalized label:** target/commit eligibility.
-- **Candidate runtime witness:** an eligibility flag or state value for the target/environment.
-- **Candidate invalidating intervention:** change the target/environment's state to ineligible between the prior decision and commit time (for example, the target no longer exists or has moved to a disqualifying state).
-- **Evaluation observability:** compare the target/environment eligibility flag at decision time against its value at revalidation time.
-- **Overlap / possible duplicate:** none identified against the other candidates. Corresponds to the "Target/environment" entry in Increment 011's own candidate change classes (Source Discipline section); this is the one candidate in this matrix with a direct, source-grounded connection to one of those hypothesis classes, rather than only a Runtime Validity or Governed Execution origin.
+- **Source mechanism:** one of the same four named conditions ("Commit eligibility"), checked at every protected commit. Re-read against the primary source during this checkpoint, Section 3 ("Boundary Checks") and Table 3.
+- **Source terminology:** "Commit eligibility," "commit boundary." Source's own boundary question: "is the authorizing path still live, with no cancellation, revocation, losing branch, or supersession?"
+- **Condition that must hold:** the authorizing path is still live at commit time, with no cancellation, revocation, losing branch, or supersession.
+- **Depends on:** "live branch, approval epoch, or authorization marker" (Table 3).
+- **Invalidating event, per source:** "branch cancellation, losing speculative path, approval loss" (Table 3).
+- **Independently checkable, per source:** yes, as one of the four independent boundary checks.
+- **Source-associated mitigation on failure:** "refuse the ineligible path," or gating through eligibility recomputation at commit (Sections 3 and 6).
+- **Provisional Track A normalized label:** target/commit eligibility. On re-reading, the source's own condition is about the *authorizing path's* liveness (branch/approval-epoch state), not narrowly about a physical target or environment's eligibility; "target/commit eligibility" is retained as a workable label but is a slightly broader gloss than the source's own framing, which is closer to "authorizing-path eligibility." This gap is noted rather than silently normalized away.
+- **Candidate runtime witness:** a liveness/eligibility flag for the authorizing path (branch, approval epoch, or authorization marker).
+- **Candidate invalidating intervention:** cancel, supersede, or revoke the authorizing path between the prior decision and commit time (mirroring the source's own "branch cancellation" or "approval loss" invalidators), while leaving the target identifier itself unchanged.
+- **Evaluation observability:** compare the authorizing-path liveness flag at decision time against its value at revalidation time.
+- **Overlap / possible duplicate:** none identified against the other candidates, contingent on experimental design keeping the target identifier constant while only the path's liveness state changes (see the experimental-distinctness table below). Still corresponds loosely to the "Target/environment" entry in Increment 011's own candidate change classes (Source Discipline section), though the source's own framing (authorizing-path liveness) is more about the state of the authorization itself than about a physical target/environment.
 - **Track A relevance:** same full-commit-boundary baseline as Candidates 2 through 4.
 - **Current disposition:** retain as candidate.
-- **Unresolved interpretation:** only the name and general framing are recorded here; CommitGuard's exact formal definition of commit eligibility requires re-reading the primary source before final operationalization.
+- **Unresolved interpretation:** the "target/environment" gloss noted above under Provisional Track A normalized label; the source's condition is somewhat narrower (path liveness) than a general target/environment-state concept would suggest.
 
 ### Candidate 6: Evidence/witness coverage sufficiency
 
 - **Source:** SAGE-Fin (Tang et al. 2026, arXiv:2608.09025).
-- **Source mechanism:** "coverage debt," defined as the set of required witnesses or validators that are missing, stale, unpromoted, or invalid for a candidate action; typed, adapter-bound candidates require an exact-artifact receipt matching the consuming adapter before an effect is permitted.
-- **Source terminology:** "coverage debt," "institutional obligation" (source's own term for the required witness/validator predicates; verified in this file's Terminology Decision Point to denote a state condition, not a UCON oBligation-B duty), "adapter-bound candidate," "exact-artifact receipt."
-- **Condition that must hold:** all witnesses/validators required for the candidate action are present, current, and correctly typed for the consuming adapter; no coverage debt exists.
-- **Provisional Track A normalized label:** evidence/witness coverage sufficiency.
-- **Candidate runtime witness:** a per-required-witness presence/validity/type-match flag.
-- **Candidate invalidating intervention:** remove, invalidate, or type-mismatch one required witness after the prior decision, leaving other witnesses untouched.
-- **Evaluation observability:** compare the coverage state (which required witnesses are present and valid) at decision time against revalidation time.
-- **Overlap / possible duplicate:** likely overlaps with Candidate 2 (CommitGuard's Freshness): both describe a witness becoming stale or otherwise invalid as the invalidating condition. Whether "coverage debt" and "witness freshness" are the same dependency described in two domains (financial adapters vs. generic commit-time authorization) or two operationally distinct conditions (coverage is about presence/type-match across possibly multiple required witnesses; freshness is specifically about age) is not resolved by this checkpoint.
+- **Source mechanism:** "coverage debt," re-read against the primary source (arXiv HTML) during this checkpoint. Section 6.1, Definition 3, gives the formal statement: for active witnesses W_t and validators V_t, the debt set D_t(c_t*) "contains each predicate in W_t^req ∪ V_t^req whose corresponding witness or validator is absent, stale, unpromoted, provenance-invalid, or scope-incompatible." Coverage debt is therefore a **set-level** aggregate over all required predicates for one candidate action, not a single witness's condition.
+- **Source terminology:** "coverage debt," "institutional obligation" (source's own term for the required witness/validator predicates; verified in this file's Terminology Decision Point to denote a state condition, not a UCON oBligation-B duty), "adapter-bound candidate," "exact-artifact receipt" (a separate mechanism, defined in Section 6.3/Definition 8, that binds a candidate to an exact-artifact hash to prevent cross-artifact reuse; distinct from coverage debt itself, not a synonym for it).
+- **Condition that must hold:** every witness/validator required for the candidate action is present, current, correctly typed, and provenance-valid for the consuming adapter; the debt set is empty.
+- **Named sub-components, per the source (Section 5.3 examples):** (a) **absence**: "a live-trade candidate that has a fresh price witness but no slippage-assumption witness has *partial* coverage debt"; (b) **staleness**: a witness "whose user-tier witness is older than the tier-recompute interval has *stale-witness* coverage debt"; (c) **type/binding failure**: "unpromoted, provenance-invalid, or scope-incompatible" witnesses. These are explicitly three distinct failure modes within one umbrella concept, not three names for the same thing.
+- **Provisional Track A normalized label:** evidence/witness coverage sufficiency. On re-reading, this label is faithful to the source's broad concept but risks obscuring that the source itself distinguishes three sub-components with different experimental shapes; see the comparison below.
+- **Candidate runtime witness:** a per-required-witness presence/validity/type-match flag, for the required-witness set of one candidate action.
+- **Candidate invalidating intervention:** remove a required witness entirely (absence), or invalidate its type/provenance/scope match (type/binding), after the prior decision, leaving other witnesses' presence and freshness untouched. (Aging a witness past a threshold without removing it is the staleness sub-case; see "Freshness vs. coverage debt: source comparison" below for why that sub-case is treated separately.)
+- **Evaluation observability:** compare the coverage state (which required witnesses are present and correctly typed) at decision time against revalidation time, scoped to the absence and type/binding sub-cases.
+- **Overlap / possible duplicate:** resolved this checkpoint, in part. See "Freshness vs. coverage debt: source comparison" immediately below. Summary: coverage debt's staleness sub-case is the same underlying dependency as Candidate 2 (CommitGuard Freshness) and should fold into it; coverage debt's absence and type/binding sub-cases are not covered by Freshness and remain a distinct, narrower version of this candidate.
 - **Track A relevance:** a per-candidate, typed staleness/coverage-tracking concept in one domain (financial market agents); does not itself describe a controlled-intervention-to-affected-dependency mapping or a full-versus-selective reevaluation comparison. An adjacent single-domain instantiation, not a mechanism to measure Track A against.
-- **Current disposition:** retain as candidate, overlap with Candidate 2 unresolved.
-- **Unresolved interpretation:** whether coverage sufficiency should merge with witness freshness into one candidate, or remain distinct on the grounds that coverage concerns presence/type-matching across potentially several witnesses while freshness concerns the age of one, is an open question for the next step, not resolved here.
+- **Current disposition:** retain as candidate, narrowed to the absence and type/binding sub-cases; the staleness sub-case is recommended to fold into Candidate 2 rather than remain here (see comparison below). This narrowing is a research-triage recommendation from this checkpoint, not a final selection.
+- **Unresolved interpretation:** whether "absence" and "type/binding failure" should themselves remain one candidate or split into two is not resolved by this checkpoint; the source treats both as coverage-debt sub-components without further internal distinction beyond the examples quoted above.
+
+### Freshness vs. coverage debt: source comparison
+
+This subsection resolves research task 2 (Freshness vs. coverage debt) using the primary-source text quoted above for both CommitGuard and SAGE-Fin. This is a research-triage conclusion about experimental design, not a Track A experimental result.
+
+| | CommitGuard Freshness | SAGE-Fin coverage debt |
+|---|---|---|
+| Object being checked | one named witness (page, token, approval, or version) | a set of required predicates (W_t^req ∪ V_t^req) for one candidate action |
+| Cardinality | single witness | set (potentially many witnesses/validators) |
+| Temporal component | yes: witness age vs. a freshness threshold, invalidated by "expiry... version advance" | yes, but only in one of three named sub-components ("stale-witness coverage debt," a witness "older than the tier-recompute interval") |
+| Missing-evidence component | not named as such; the closest source invalidator is "revocation," which removes a witness's validity rather than its presence | yes, named explicitly as "absence" / "partial coverage debt" (a required witness never obtained) |
+| Typing/binding component | not part of Freshness; CommitGuard checks this separately as its own condition ("Effect binding") | yes, named explicitly ("unpromoted, provenance-invalid, or scope-incompatible") |
+| Invalidation event | expiry, DOM mutation, version advance, revocation (source, Table 3) | witness never produced (absence); age past recompute interval (staleness); provenance/scope mismatch (binding) |
+| Potential runtime witness | one witness's age/timestamp | membership and per-member status (present/valid/typed) across a required-witness set |
+| Experimentally distinguishable from each other? | staleness sub-case: **no**, same experimental shape as Freshness (age one witness past a threshold, holding presence and typing fixed) | absence and type/binding sub-cases: **yes**, distinguishable from Freshness (remove a witness entirely, or break its type/provenance match, while holding age fixed) |
+
+**Provisional disposition: hierarchical relationship, not a clean merge and not a clean separation.** CommitGuard's Freshness corresponds to exactly one of coverage debt's three named sub-components (staleness); the other two sub-components (absence, type/binding) are not covered by Freshness and are not evidenced as equivalent to any other single candidate in this matrix. The practical recommendation for a later selection step: fold the staleness sub-case of Candidate 6 into Candidate 2 (they are the same dependency under two source vocabularies), and retain a narrower Candidate 6 covering only the absence and type/binding sub-cases, distinct from Candidate 2. This is not forced by the shared word "stale": it follows from the source definitions themselves, which name staleness as one sub-case among three, and from the fact that an intervention aging one witness (holding presence and typing fixed) is not experimentally distinguishable between the two papers' framings, while an intervention removing or mistyping a witness (holding age fixed) is.
+
+### Causal/ordering priority: first-experiment disposition
+
+This subsection resolves research task 4, using the primary-source detail on Candidate 3 established above.
+
+Applying the stated criteria:
+
+- **Can one deterministic controlled intervention invalidate it?** Weakly. The source's own invalidators ("callback reorder, missing await, late worker result") are all relational, describing the order of two or more events, not a single value change. A controlled intervention would need to construct at least two steps and violate their required order, which is a qualitatively different intervention shape than flipping a Boolean or changing one identifier.
+- **Can the intervention be represented without building a concurrency system?** Only partially. A minimal, artificial two-step ordering could be simulated in a test harness without a full concurrency system, but the source's own witness, a "predecessor completion or barrier token," presupposes some sequencing or barrier mechanism, which Runtime Validity's current bounded implementation does not have.
+- **Can its witness be observed without distributed ordering infrastructure?** Not with the current implementation; a barrier-token or sequence witness would need to be added first.
+- **Does it test the central stale-justification question?** Only indirectly. The central Track A question is whether a justification that was valid earlier remains valid at the point of execution given a runtime intervention. Causal priority instead asks whether execution steps occurred in the required order, an execution-integrity property, adjacent to but not the same question.
+- **Does it primarily introduce event-ordering/concurrency semantics that are a separate research problem?** Yes. Its verified invalidators (reordering, missing await, late results) place it structurally closer to the already-classified later-track concerns (Janicke et al. 2008's inter-process dependency graph, Katt et al. 2008's any-attribute-change reevaluation) than to the other five candidates' single-value witnesses.
+
+**Provisional disposition: defer to a later Track A experiment.** Retaining Candidate 3 in the first experiment would require building sequencing/barrier infrastructure the current implementation lacks, and would risk absorbing a concurrency/ordering question under the Track A name rather than testing the primary stale-justification question directly. It is not excluded from Track A altogether (it is a real, source-grounded, heterogeneous condition, unlike the sources classified as vocabulary-only or later-track-only below), but it is not retained as viable for the *first* experiment. This is a research-triage judgment, not a claim that ordering is unimportant to governed execution generally.
+
+### Policy-state currency vs. `authority_valid`: conceptual-distinctness analysis
+
+This subsection resolves research task 3. No code changes were made or considered; this is a design-level analysis only.
+
+Two controlled interventions are useful to distinguish:
+
+- **Intervention A:** a subject's underlying authority fact changes (for example, a credential or delegation is revoked) while the policy content that interprets that fact is unchanged.
+- **Intervention B:** the policy content/version that determines what counts as valid authority changes, while the subject's underlying authority facts are unchanged.
+
+**Conceptually distinct in source-grounded models:** yes. MasuGate treats policy state as an independently versioned, mutable object with its own read/write scopes, separate from the entities the policy governs. Ray 2004 separately models "policy objects" (subject-set, target-set, rights-set) as distinct from the runtime data transactions execute against. Park, Zhang, Sandhu 2004's UCON taxonomy treats subject/object attribute mutability as a distinct concern from the policy rules that interpret those attributes. Across these source-grounded models, "the policy changed" and "the subject's authority fact changed" are different kinds of event.
+
+**Currently distinguishable in Runtime Validity: no.** The current bounded implementation represents authority as a single opaque Boolean, `authority_valid`, with no field recording which policy rule or which subject-level fact produced that value. Intervention A and Intervention B are both observable, today, only as the same signal: `authority_valid` flips (or does not). There is no way, with the current schema, to determine after the fact whether a flip was caused by a policy-content change or a subject-fact change.
+
+**Minimum future witness that would separate them:** a policy-fragment identifier, version, or hash, recorded alongside `authority_valid` at decision time and compared again at revalidation time, mirroring MasuGate's policy-read-scope concept. With such a field, Intervention B would change the recorded policy-fragment version while Intervention A would leave it unchanged (even if `authority_valid` itself also changed under Intervention A, depending on how the subject-level determination is wired). This field does not exist today and is not added by this checkpoint.
+
+**What this checkpoint does not conclude:** that policy-state currency and `authority_valid` are necessarily one dependency, merely because the current Boolean cannot separate them. The inseparability observed today is an implementation limitation of the bounded reference implementation, not evidence about the underlying conceptual structure. Whether to add the witness needed to separate them, and whether doing so is worth the added scope, is left open for the final-selection step.
+
+**Provisional disposition: unresolved, pending a design decision on witness investment.** Policy-state currency remains a retained candidate (see Candidate 1 above), with its overlap against `authority_valid` explicitly flagged rather than assumed resolved in either direction.
+
+### Experimental-distinctness table
+
+This table addresses whether an intervention can be defined for each of Candidates 1, 2, 4, 5, and 6 that changes that candidate while holding the others constant. It is a design-feasibility check, not an executed experiment.
+
+| Candidate | Controlled intervention | Other candidates held fixed | Observable witness | Potential confound | Experimentally distinguishable? |
+|---|---|---|---|---|---|
+| 1. Policy-state currency | Version-bump the specific policy fragment read by the decision | `authority_valid` subject-level fact; witness freshness; effect binding; target/path eligibility | Policy-fragment version/hash (does not exist today) | Without a real policy-version witness, a "policy-only" intervention can currently only be simulated by also flipping `authority_valid`, confounding it with a direct authority-state change | Unresolved: no with current implementation; yes if a policy-version witness is added |
+| 2. Witness/authorization freshness | Age one witness past its freshness threshold (or trigger source-style "expiry") | Witness presence (not removed); effect binding; target/path eligibility; causal order; policy content | Witness age/timestamp vs. threshold | If "expiry" is implemented as outright removal rather than marking-stale-while-present, it collapses into Candidate 6's absence sub-case | Yes, if the intervention ages the witness without removing it |
+| 4. Effect/action binding | Substitute a different target/effect identifier at commit time, keeping the original witness | Witness freshness; causal order; policy content; the substituted target's own eligibility | Effect/target identifier match | If the substitute target is itself ineligible, this collapses into Candidate 5 | Yes, if the substitute target is chosen to remain independently eligible |
+| 5. Target/commit eligibility | Cancel, supersede, or revoke the authorizing path, keeping the same target identifier | Effect binding (same identifier); witness freshness; causal order; policy content | Authorizing-path liveness flag | If revoking the path also changes the target identifier itself, this collapses into Candidate 4 | Yes, if the target identifier is held constant while only path liveness changes |
+| 6. Evidence/witness coverage sufficiency (narrowed to absence/type-binding) | Remove a required witness entirely, or break its type/provenance/scope match | Presence and age of the remaining, untouched required witnesses; effect binding; target/path eligibility; causal order | Presence/type-match flags across the required-witness set | If the intervention ages rather than removes or mistypes a witness, it collapses into Candidate 2 (see the Freshness-vs-coverage-debt comparison above) | Yes, if scoped to removal or type/provenance mismatch rather than aging |
 
 ### Baseline-only and excluded sources (not retained as obligation candidates)
 
@@ -440,24 +519,34 @@ Six candidates are retained pending final selection. That is intentionally more 
 
 This is a checkpoint review, not a selection. No final 3-4 obligation set is chosen in this increment.
 
-**Distinct candidate dependencies remaining after obvious merges.** Six candidates are retained (Candidates 1 through 6 above). Of those, Candidate 6 has a flagged, unresolved overlap with Candidate 2, and Candidate 1 has a flagged, unresolved overlap with Runtime Validity's existing `authority_valid` predicate. If both overlaps resolve toward merging, as few as four operationally distinct candidates could remain (Candidates 2/6 merged, 3, 4, 5, and Candidate 1 either merged into `authority_valid` or kept as a separate policy-content dimension). If both overlaps resolve toward keeping the candidates distinct, six remain.
+**Distinct candidate dependencies remaining after obvious merges.** Six candidates are retained (Candidates 1 through 6 above). This checkpoint resolved the CommitGuard-side definitions and the Freshness/coverage-debt overlap (Candidate 6's staleness sub-case is recommended to fold into Candidate 2), leaving the Candidate 1/`authority_valid` overlap as the one still fully unresolved. If Candidate 1 resolves toward merging with `authority_valid` and Candidate 6 is narrowed as recommended, five operationally distinct candidates remain (2/6-staleness merged as Candidate 2, Candidate 6 narrowed to absence/type-binding, 3, 4, 5). If Candidate 1 is kept as a separate policy-content dimension, six remain, with Candidate 3 already provisionally deferred rather than counted toward a first experiment.
 
-**Strongest candidates for experimental manipulation.** Candidates 4 (effect/action binding) and 5 (target/commit eligibility) currently look strongest for a first controlled experiment: each has a clean, single-value witness, a clearly stated invalidating intervention that does not depend on inventing new infrastructure (an identifier comparison and a state-flag comparison, respectively), and no unresolved overlap with another candidate. Candidate 2 (witness/authorization freshness) is also comparatively strong, contingent on resolving its overlap with Candidate 6.
+**Strongest candidates for experimental manipulation.** Candidates 4 (effect/action binding) and 5 (target/commit eligibility) remain strongest for a first controlled experiment, now with source-verified definitions: each has a clean, single-value witness, a clearly stated invalidating intervention that does not depend on inventing new infrastructure, and (per the experimental-distinctness table above) a known, avoidable confound with the other. Candidate 2 (witness/authorization freshness) is also strong, now with its overlap against Candidate 6 resolved in the narrow sense that its own staleness-based experimental design is distinct from Candidate 6's narrowed absence/type-binding design.
 
-**Ambiguous candidates.** Candidate 1 (policy-state currency) is ambiguous because Runtime Validity's current implementation cannot distinguish a policy-content change from an authority-state change without new witness infrastructure; whether that infrastructure is worth adding before or after obligation selection is unresolved. Candidate 6 (evidence/witness coverage sufficiency) is ambiguous for the reason stated in its own entry (possible duplicate of Candidate 2).
+**Ambiguous candidates.** Candidate 1 (policy-state currency) remains ambiguous: conceptually distinct from `authority_valid` in source-grounded models, but not currently distinguishable in Runtime Validity's implementation without new witness infrastructure (see the conceptual-distinctness analysis above). This is now a design-investment question (add the witness, or do not), not an unexamined gap.
 
-**Baseline-only.** Ray 2004 (DKE), Katt et al. 2008, and the classical mechanism ancestry group are baseline-only: they constrain what Track A can credibly claim as novel and supply the strong-baseline shape (especially CommitGuard, treated both as the leading full-commit-boundary baseline exemplar and as the source of Candidates 2 through 5), but are not themselves candidate obligations.
+**Baseline-only.** Ray 2004 (DKE), Katt et al. 2008, and the classical mechanism ancestry group remain baseline-only: they constrain what Track A can credibly claim as novel and supply the strong-baseline shape (especially CommitGuard, now source-verified as the leading full-commit-boundary baseline exemplar and as the source of Candidates 2 through 5), but are not themselves candidate obligations.
 
-**Deferred / excluded.** Janicke et al. 2008 (inter-process concurrency, later-track concern) and Park, Zhang, Sandhu 2004 (vocabulary only) are excluded from candidacy for the reasons stated in their entries above. Candidate 3 (causal/ordering priority) is retained but flagged as the weakest of the six for a first experiment, for the same later-track-adjacency reason.
+**Deferred / excluded.** Janicke et al. 2008 (inter-process concurrency, later-track concern) and Park, Zhang, Sandhu 2004 (vocabulary only) remain excluded from candidacy for the reasons stated in their entries above. Candidate 3 (causal/ordering priority) is now provisionally deferred to a later Track A experiment rather than merely flagged as weaker (see the first-experiment disposition analysis above); it remains a real, source-grounded candidate for a future experiment, not excluded from Track A altogether.
 
-**Source or conceptual gaps that must be resolved before selecting the initial 3-4 set:**
+### Source-resolution checkpoint
 
-1. Resolve whether Candidate 1 (policy-state currency) is operationally distinguishable from `authority_valid` in Runtime Validity's current implementation, or requires new witness infrastructure to become distinguishable.
-2. Resolve whether Candidate 6 (evidence/witness coverage sufficiency) is the same dependency as Candidate 2 (witness/authorization freshness) under two source vocabularies, or a genuinely distinct one.
-3. Re-read CommitGuard's primary source (arXiv:2607.10487) directly for the formal definitions of Freshness, Causal priority, Effect binding, and Commit eligibility; this file currently records only their names and a general commit-time-authorization framing, not their exact conditions.
-4. Decide whether Candidate 3 (causal/ordering priority) belongs in the initial Track A experiment at all, given its structural adjacency to later-track ordering/concurrency concerns, or should be deferred alongside Janicke et al. 2008.
-5. Confirm or replace, as a separate and explicit decision (not made here), whether "governance obligation" remains the master term given that none of the six retained candidates are UCON oBligations (B) in the technical sense; this file's existing Terminology Decision Point already flags this as open.
-6. Independently verify Ray/Xin DBSec 2004 if it is to be used for anything beyond an unconfirmed cross-reference to the verified Ray 2004 DKE paper.
+This subsection answers the questions posed for this checkpoint directly.
+
+- **Which candidate definitions are now source-verified.** All four of CommitGuard's named conditions (Candidates 2, 3, 4, 5) were re-read against the primary source (arXiv:2607.10487, Section 3 and Table 3) during this checkpoint, including their dependencies, invalidating events, and source-associated mitigations, quoted above in each candidate's entry. SAGE-Fin's "coverage debt" (Candidate 6) was re-read against the primary source (arXiv:2608.09025, Section 6.1 Definition 3 and Section 5.3), including its three named sub-components. A bibliographic error was also found and corrected during this re-verification: SAGE-Fin's fourth author is Youwei Yang, not "Youwei Wang" as an earlier pass of this file recorded.
+- **Which overlaps were resolved.** The Candidate 2/Candidate 6 overlap is resolved to a hierarchical relationship: coverage debt's staleness sub-component is the same dependency as Freshness; its absence and type/binding sub-components are not, and remain a narrower, distinct version of Candidate 6. The Candidate 3 first-experiment question is resolved: defer, for the reasons in the disposition analysis above.
+- **Which remain unresolved.** The Candidate 1/`authority_valid` overlap remains unresolved; it depends on a design decision (whether to add a policy-version witness) rather than further source reading, and that decision is explicitly not made by this checkpoint. Whether "absence" and "type/binding failure" (Candidate 6's two remaining sub-components) should themselves stay merged or split further is also unresolved. The master-term question ("governance obligation" versus "decision dependency" or another term) remains open, per the existing Terminology Decision Point; this checkpoint's findings, if anything, strengthen the case that none of the retained candidates are UCON oBligations (B), but no rename is made here.
+- **Which candidates are experimentally distinguishable.** Per the experimental-distinctness table above: Candidates 2, 4, and 5 are distinguishable from each other and from Candidate 6 (narrowed) with careful intervention design that avoids the identified confounds. Candidate 1 is distinguishable from `authority_valid` only if new witness infrastructure is added; today it is not. Candidate 3 is not cleanly distinguishable without sequencing/barrier infrastructure the current implementation lacks.
+- **Which should likely be deferred.** Candidate 3 (causal/ordering priority), for the reasons above. Whether Candidate 1 should be deferred pending witness infrastructure, or included with the infrastructure added as part of the same future step, is left to the final-selection step rather than decided here.
+- **Whether enough evidence now exists for a separate final-selection decision.** Closer than before this checkpoint, but not yet complete. The four candidates with no remaining source-definition gap and a clear experimental design (2, 4, 5, and the narrowed 6) could plausibly support a final-selection decision on their own. The remaining open item is Candidate 1, where the blocker is a design choice (add a policy-version witness or not) rather than a source-reading gap; that decision, not further literature review, is what a final-selection step would need to make.
+
+**Source or conceptual gaps that must still be resolved before selecting the initial 3-4 set:**
+
+1. Decide whether to add a policy-fragment version/hash witness to distinguish Candidate 1 (policy-state currency) from `authority_valid`, or to treat Candidate 1 as out of scope for the first experiment absent that witness.
+2. Decide whether Candidate 6's two remaining sub-components (absence, type/binding) should stay combined or split into two candidates.
+3. Confirm or replace, as a separate and explicit decision (not made here), whether "governance obligation" remains the master term given that none of the six retained candidates are UCON oBligations (B) in the technical sense; this file's existing Terminology Decision Point already flags this as open.
+4. Independently verify Ray/Xin DBSec 2004 if it is to be used for anything beyond an unconfirmed cross-reference to the verified Ray 2004 DKE paper.
+5. If Candidate 3 is ever revisited for inclusion, define a minimal sequencing/barrier witness first; this checkpoint does not attempt that design.
 
 ## Non-Goals
 
@@ -556,10 +645,19 @@ The primary verification is research-artifact verification:
 
 ## Observed Result
 
-**Research work completed in this checkpoint:** the obligation-source matrix described in "Planned Artifact" was produced (see "Obligation-Source Matrix" and "Matrix Review Before Final Selection" above), applying the prior-mechanism-coverage check from "Planned Evaluation" to every source already recorded in "Verified Prior-Art Sources." Six candidates are retained pending selection, two of them with explicitly unresolved overlaps, one flagged weaker than the others, and six sources or source groups are classified as baseline-only, vocabulary-only, later-track, or pending verification, each with a stated reason.
+**Research work completed in this checkpoint (first pass, matrix construction):** the obligation-source matrix described in "Planned Artifact" was produced, applying the prior-mechanism-coverage check from "Planned Evaluation" to every source already recorded in "Verified Prior-Art Sources." Six candidates were retained pending selection, two flagged with unresolved overlaps, one flagged weaker than the others.
 
-**Observed experimental result: Not yet evaluated.** There is still no Track A experimental result. This checkpoint produces a research-triage artifact, not an invalidation-mapping finding, a disposition-preservation finding, or any other Track A conclusion. No obligation kind was added to `/decide`, no runtime code changed, and no final obligation set was selected.
+**Research analysis result (this checkpoint, source-resolution pass):** re-read CommitGuard (arXiv:2607.10487) and SAGE-Fin (arXiv:2608.09025) directly against their primary-source text (not summaries) to resolve four specific open questions:
+
+1. CommitGuard's four named conditions (Freshness, Causal priority, Effect binding, Commit eligibility) now have source-verified dependencies, invalidating events, and mitigations, recorded in each candidate's entry above. A bibliographic error (SAGE-Fin's fourth author name) was found and corrected during this re-verification.
+2. Freshness (CommitGuard) and coverage debt (SAGE-Fin) are resolved to a hierarchical relationship, not a clean merge or a clean separation: coverage debt's staleness sub-component is the same dependency as Freshness; its absence and type/binding sub-components are not.
+3. Policy-state currency and `authority_valid` are conceptually distinct in source-grounded models but not currently distinguishable in Runtime Validity's implementation without new witness infrastructure that does not exist today; this remains a design-investment decision, not resolved by source reading alone.
+4. Causal/ordering priority is provisionally judged to defer to a later Track A experiment, given its reliance on relational, multi-event witnesses (a "predecessor completion or barrier token") that the current bounded implementation has no infrastructure to represent.
+
+See "Matrix Review Before Final Selection" and its "Source-resolution checkpoint" subsection above for the full reasoning and the experimental-distinctness table.
+
+**Observed experimental result: Not yet evaluated.** There is still no Track A experimental result. This checkpoint produces research-triage and source-verification findings, not an invalidation-mapping finding, a disposition-preservation finding, or any other Track A conclusion. No obligation kind was added to `/decide`, no runtime code changed, and no final obligation set was selected.
 
 ## Next Step
 
-Resolve the specific gaps recorded in "Matrix Review Before Final Selection" before selecting the initial 3-4 obligation set: in particular, re-read CommitGuard's primary source for the formal definitions of its four named conditions (this file currently records only their names), and resolve the two flagged overlaps (Candidate 1 against `authority_valid`, and Candidate 6 against Candidate 2). Do not select the final experimental set until those gaps are addressed or explicitly carried forward as accepted open questions.
+The remaining gaps before selecting the initial 3-4 obligation set are now design decisions rather than source-reading gaps: (1) whether to add a policy-fragment version witness to make Candidate 1 distinguishable from `authority_valid`, and (2) whether Candidate 6's absence and type/binding sub-components should stay combined or split. A separate final-selection step can be taken once those two decisions are made; it does not require further literature review of the sources already reviewed. Independent verification of Ray/Xin DBSec 2004 remains outstanding if that source is ever used for more than an unconfirmed cross-reference. If Candidate 3 is revisited later, a minimal sequencing/barrier witness would need to be designed first.
