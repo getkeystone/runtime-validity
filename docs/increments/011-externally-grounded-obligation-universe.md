@@ -1,6 +1,8 @@
 # Increment 011: Externally Grounded Obligation Universe
 
-Status: In Progress
+Status: Complete
+
+Completion note: this increment's stated Scope bullet "select a minimal initial obligation universe for controlled experimentation" is satisfied by "Final Selection" above. The Reproducibility Requirements bullet "final selected obligation set" is satisfied by the same section. The Planned Tests verification criteria (traceability to a source mechanism, source/normalization distinguishability, preserved rejected candidates, satisfied inclusion criteria, verified bibliographic identity) are satisfied for all four selected dependencies. Independent verification of Ray/Xin DBSec 2004 remains outstanding but is explicitly not a blocker: that source is not used to justify any selected candidate, and remains recorded as unverified background/cross-reference only. The Reproducibility Requirements bullet "later corrections discovered during implementation" does not apply yet, since this increment does not implement; it is forward guidance for whichever future increment designs the witness model named in Next Step, not an unmet deliverable of this one.
 
 ## Objective
 
@@ -548,6 +550,95 @@ This subsection answers the questions posed for this checkpoint directly.
 4. Independently verify Ray/Xin DBSec 2004 if it is to be used for anything beyond an unconfirmed cross-reference to the verified Ray 2004 DKE paper.
 5. If Candidate 3 is ever revisited for inclusion, define a minimal sequencing/barrier witness first; this checkpoint does not attempt that design.
 
+## Final Selection
+
+Earlier sections of this file (Inclusion Criteria, Non-Goals) state that this increment does not select the final experimental set. Those statements were true when written: they described the matrix-construction and source-resolution checkpoints above, both of which explicitly anticipated "a later, separate step" to perform the selection (see "Six candidates are retained pending final selection" under Obligation-Source Matrix, and "A separate final-selection step can be taken once those two decisions are made" under Observed Result). This section is that separate step, performed as a bounded continuation of the same increment, not a silent contradiction of what those earlier sections said about themselves at the time.
+
+This selection draws only on the source-grounded matrix and source-resolution work already in this file. No new literature search was performed for this step.
+
+### Selected dependencies for the first bounded experiment
+
+**1. Witness/authorization freshness** (derived from Candidate 2 / CommitGuard Freshness; absorbs the staleness sub-case of Candidate 6 / SAGE-Fin coverage debt)
+
+- Exact primary source: CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487), Section 3 ("Boundary Checks"), Table 3.
+- Source terminology: "Freshness," "witness."
+- Track A normalized experimental label: witness/authorization freshness.
+- Runtime witness required: a timestamp or age value attached to the authorization witness, compared against a freshness threshold.
+- Controlled invalidating intervention: age the witness past its freshness threshold (or mark it administratively expired) without removing the witness record and without changing any other selected dependency.
+- What must remain fixed: witness presence (the witness record stays present throughout, only its currency changes); the effect/target identifier; authorizing-path liveness; completeness of the required-witness set.
+- Observable invalidation result: witness age at revalidation exceeds the threshold that held at decision time; the currency check flips from current to stale.
+- Nearest confound with another selected dependency: Required-witness coverage (below). If "expire" were implemented as outright removal of the witness record rather than marking it stale-while-present, this would collapse into the coverage dependency's absence case.
+- How the intervention avoids that confound: age the witness in place (advance a stored timestamp or expiry marker) rather than deleting the witness record; the witness must remain retrievable throughout, with only its currency check failing.
+- Implementation investment required: one stored age/timestamp value per witness and a fixed-threshold comparison; no new infrastructure beyond a single scalar field, directly extending the pattern the current `authority_valid` comparison already uses.
+- Why the first experiment rather than a later one: the cleanest single-value witness among the reviewed candidates, fully source-verified with no remaining definitional gap, and structurally close to the comparison mechanism already implemented for `authority_valid`.
+
+**2. Effect/action binding** (derived from Candidate 4 / CommitGuard Effect binding)
+
+- Exact primary source: CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487), Section 3, Table 3.
+- Source terminology: "Effect binding," "binding."
+- Track A normalized experimental label: effect/action binding.
+- Runtime witness required: an effect or target identifier (version, ticket, page instance, or branch, per the source) recorded at decision time.
+- Controlled invalidating intervention: substitute a different effect/target identifier at revalidation time while presenting the same prior decision and the same original witness.
+- What must remain fixed: witness freshness (age unchanged); authorizing-path liveness (unchanged); completeness of the required-witness set (unchanged); the substituted target's own eligibility (it must remain independently eligible).
+- Observable invalidation result: the effect/target identifier presented at revalidation does not match the one recorded at decision time; a clean identifier-equality check fails.
+- Nearest confound with another selected dependency: Authorizing-path eligibility (below). If the substitute target happens to also be ineligible, the failure could be attributed to either binding mismatch or path ineligibility.
+- How the intervention avoids that confound: the substitute target/effect identifier is chosen to be itself independently eligible, isolating the observed failure to identity mismatch alone.
+- Implementation investment required: one identifier field recorded at decision time and re-supplied at revalidation, plus an equality check; no new infrastructure.
+- Why the first experiment rather than a later one: identifier equality is unambiguous to implement and observe, fully source-verified, and depends on no mechanism beyond a stored identifier.
+
+**3. Authorizing-path eligibility** (derived from Candidate 5 / CommitGuard Commit eligibility; "authorizing-path eligibility" is used here, preferred over "target/commit eligibility," because the source's own condition concerns the liveness of the authorizing path, not a physical target or environment's state, as already noted in Candidate 5's own entry above)
+
+- Exact primary source: CommitGuard (Santos-Grueiro 2026, arXiv:2607.10487), Section 3, Table 3.
+- Source terminology: "Commit eligibility." Source's own boundary question: "is the authorizing path still live, with no cancellation, revocation, losing branch, or supersession?"
+- Track A normalized experimental label: authorizing-path eligibility.
+- Runtime witness required: a liveness/eligibility flag for the authorizing path (branch, approval epoch, or authorization marker, per the source).
+- Controlled invalidating intervention: cancel, supersede, or revoke the authorizing path between the prior decision and revalidation, using a dedicated liveness flag distinct from the target-identifier field.
+- What must remain fixed: the target/effect identifier (unchanged, same target still referenced); witness freshness (unchanged); completeness of the required-witness set (unchanged).
+- Observable invalidation result: the authorizing-path liveness flag reads live at decision time and cancelled/superseded/revoked at revalidation time.
+- Nearest confound with another selected dependency: Effect/action binding (above). If revoking the path were implemented by clearing or altering the target-identifier field itself, the failure could be attributed to either eligibility loss or binding mismatch.
+- How the intervention avoids that confound: the path's liveness is represented and changed through its own flag, independent of the target-identifier field, so the identifier stays untouched while only liveness changes.
+- Implementation investment required: one liveness/eligibility flag for the authorizing path, checked at revalidation; no new infrastructure beyond a single Boolean/enum field, structurally similar to the existing `authority_valid` pattern.
+- Why the first experiment rather than a later one: a clean single-flag witness, fully source-verified, extending the existing Boolean-comparison pattern directly; unlike deferred Candidate 3, it requires no sequencing or multi-event ordering infrastructure.
+
+**4. Required-witness coverage** (derived from narrowed Candidate 6 / SAGE-Fin coverage debt; absence sub-case only for this first experiment)
+
+- Exact primary source: SAGE-Fin (Tang, Liu, Zhang, Yang, Chen, Dong 2026, arXiv:2608.09025), Section 6.1 (Definition 3) and Section 5.3.
+- Source terminology: "coverage debt," specifically the source's own "partial coverage debt" example: "a live-trade candidate that has a fresh price witness but no slippage-assumption witness has *partial* coverage debt."
+- Track A normalized experimental label: required-witness coverage, scoped for this first experiment to the absence sub-case only.
+- Runtime witness required: a presence flag (or membership count) for each witness in a defined required-witness set for the candidate action.
+- Controlled invalidating intervention: remove one required witness from the set entirely after the prior decision (it is never resupplied), while every other required witness stays present and unaged.
+- What must remain fixed: presence and age of all other required witnesses (untouched, not aged past any threshold); the effect/target identifier (unchanged); authorizing-path liveness (unchanged).
+- Observable invalidation result: at revalidation, the required-witness membership check finds one previously present witness now absent; the coverage-debt set, empty at decision time, is no longer empty.
+- Nearest confound with another selected dependency: Witness/authorization freshness (above). If the intervention were implemented by letting a witness age/expire rather than removing it outright, this would collapse into the freshness dependency rather than testing absence.
+- How the intervention avoids that confound: the witness record is deleted or never supplied, rather than aged in place, so presence itself, not currency, is what changes.
+- Implementation investment required: a defined required-witness set per action (a minimal two-witness set is sufficient for a first experiment) and a presence/membership check. This is more infrastructure than dependencies 1 through 3 each need (which require only a single scalar or flag), since this one requires representing a small set rather than one value, but it remains bounded and does not require SAGE-Fin's own full adapter-typed receipt system.
+- Why the first experiment rather than a later one: the absence sub-case is the cleanest, most cheaply operationalized part of coverage debt, a membership/count check, source-verified, and (once scoped this way) clearly distinguishable from freshness. The type/binding sub-case is deferred rather than combined into this same predicate; see below for why.
+
+### Deferred candidates and sub-cases
+
+**Candidate 1: Policy-state currency.** Source-grounded (MasuGate's policy-read-scope concept) and conceptually distinct from `authority_valid` in source-grounded models; not rejected as irrelevant. Deferred from the first experiment because the current bounded implementation has no independent policy-fragment/version witness and therefore cannot distinguish this dependency from `authority_valid` without new infrastructure. Selecting it now would make the initial ontology depend on adding a mechanism for the sole purpose of manufacturing experimental distinctness, rather than on a mechanism the first experiment otherwise needs. Reconsider once, and only once, a policy-version witness is independently justified.
+
+**Candidate 3: Causal/ordering priority.** Already source-grounded (CommitGuard's own fourth condition). Deferred because it requires sequencing/barrier/multi-event witness infrastructure (a "predecessor completion or barrier token," per the source) outside the intended first bounded experiment, which is scoped to single-value and simple-set witnesses. Not excluded from Track A; a candidate for a later experiment once minimal sequencing infrastructure is deliberately designed.
+
+**Candidate 6, type/binding sub-case.** Not rejected. Deferred as a later coverage extension to Required-witness coverage above. Initial witness-absence coverage is experimentally cleaner because it requires only a presence/membership check against a defined required-witness set; type/binding insufficiency would additionally require representing and checking type, provenance, and scope metadata per witness, which is more infrastructure than needed to establish the basic invalidation-mapping mechanics in a first experiment. It can be added as a second, distinguishable failure mode on the same required-witness-coverage dependency once the absence case is exercised.
+
+### Final-selection table
+
+| Selected dependency | Witness stays present? | Witness stays current? | Target/effect identifier unchanged? | Authorizing path stays live? | Required-witness set stays complete? | What actually changes |
+|---|---|---|---|---|---|---|
+| 1. Witness/authorization freshness | yes | no | yes | yes | yes | witness age/currentness |
+| 2. Effect/action binding | yes | yes | no | yes | yes | target/effect identifier |
+| 3. Authorizing-path eligibility | yes | yes | yes | no | yes | authorizing-path liveness |
+| 4. Required-witness coverage | no (one witness removed) | n/a for the removed witness | yes | yes | no | witness presence |
+
+This table is a design-feasibility summary, not an executed experiment. It shows that each selected dependency has exactly one column that changes while the others are held fixed, which is what makes the four interventions mutually distinguishable by design; it does not show that they are distinguishable in an actual run, since no run has occurred.
+
+**This selection is not a claim of a complete ontology of governance obligations.** It is a bounded initial set chosen from a wider, non-exhaustive review of published mechanisms, explicitly capped at four, with three further source-grounded items (Candidate 1, Candidate 3, and Candidate 6's type/binding sub-case) deferred rather than rejected. A later increment may add to or revise this set.
+
+### Terminology note
+
+The bounded implementation that later operationalizes this selection will need explicit runtime witnesses representing these four selected decision dependencies. This does not rename the master research term. "Governance obligation" remains the current master term used across Track A documentation, per the existing Terminology Decision Point above; "decision dependency" remains an open alternative term noted there, not adopted as a replacement by this selection. Any future rename remains a separate, explicit design decision, to be recorded when made.
+
 ## Non-Goals
 
 This increment does not:
@@ -588,6 +679,15 @@ At the start of this increment:
 - source-mechanism descriptions are **External evidence** when accurately supported by published sources;
 - selection of obligations for the experiment is a **Research design choice**;
 - no Track A research conclusion exists yet.
+
+At the completion of this increment, following the final selection above:
+
+- CommitGuard's and SAGE-Fin's own condition/mechanism definitions, as quoted in this file, are **External evidence**;
+- whether Freshness and coverage debt's staleness sub-case are the same dependency, and whether Candidate 3 requires infrastructure outside the first experiment's scope, are **Research interpretations** of that external evidence, not restatements of it;
+- the four normalized experimental labels (witness/authorization freshness, effect/action binding, authorizing-path eligibility, required-witness coverage) and their mapping to source conditions are **Design choices**;
+- that the four selected witnesses can be defined so as to change independently of one another (the final-selection table) is an **Experimental-design observation**, based on the stated interventions and confounds, not on an executed experiment;
+- the selection of these four dependencies for the first experiment, and the deferral of the other three items, is a **Research design choice**;
+- no Track A research conclusion exists about invalidation mapping, disposition preservation, revalidation work, or the completeness of the obligation universe; this increment does not produce one.
 
 ## Current Claim Position
 
@@ -656,8 +756,20 @@ The primary verification is research-artifact verification:
 
 See "Matrix Review Before Final Selection" and its "Source-resolution checkpoint" subsection above for the full reasoning and the experimental-distinctness table.
 
-**Observed experimental result: Not yet evaluated.** There is still no Track A experimental result. This checkpoint produces research-triage and source-verification findings, not an invalidation-mapping finding, a disposition-preservation finding, or any other Track A conclusion. No obligation kind was added to `/decide`, no runtime code changed, and no final obligation set was selected.
+**Research conclusion supported by this increment:** an initial bounded four-dependency experimental set (witness/authorization freshness, effect/action binding, authorizing-path eligibility, required-witness coverage) was selected from the source-grounded candidate matrix under explicit inclusion and deferral criteria, with three further source-grounded items (policy-state currency, causal/ordering priority, and coverage debt's type/binding sub-case) explicitly deferred rather than rejected. See "Final Selection" above for the complete rationale, per-dependency detail, and final-selection table.
+
+**Not supported by this increment, and not claimed:**
+
+- no intervention-to-obligation invalidation mapping result;
+- no disposition-preservation result (scoped versus full commit-boundary reevaluation);
+- no lower-revalidation-work or latency result;
+- no runtime correctness result;
+- no portability result across domains or implementations;
+- no claim of complete or exhaustive obligation coverage (the four selected dependencies are an initial bounded set, not an ontology);
+- no claim that obligation-scoped revalidation is superior to, or even different in outcome from, full commit-boundary reevaluation.
+
+**Observed experimental result: Not yet evaluated.** No Track A experiment has been run. This increment produces a research-triage artifact and a final-selection decision, not an invalidation-mapping finding, a disposition-preservation finding, or any other Track A experimental conclusion. No obligation kind was added to `/decide`, and no runtime code changed.
 
 ## Next Step
 
-The remaining gaps before selecting the initial 3-4 obligation set are now design decisions rather than source-reading gaps: (1) whether to add a policy-fragment version witness to make Candidate 1 distinguishable from `authority_valid`, and (2) whether Candidate 6's absence and type/binding sub-components should stay combined or split. A separate final-selection step can be taken once those two decisions are made; it does not require further literature review of the sources already reviewed. Independent verification of Ray/Xin DBSec 2004 remains outstanding if that source is ever used for more than an unconfirmed cross-reference. If Candidate 3 is revisited later, a minimal sequencing/barrier witness would need to be designed first.
+Design the executable witness model and intervention matrix for the four selected dependencies (witness/authorization freshness, effect/action binding, authorizing-path eligibility, required-witness coverage): the concrete schema for each witness, how each controlled intervention will be triggered, and how each observable invalidation result will be recorded, before any implementation begins. This design step is not performed by this increment. Independent verification of Ray/Xin DBSec 2004 remains outstanding if that source is ever used for more than an unconfirmed cross-reference; it does not block the design step above, since no selected dependency depends on it. If Candidate 1, Candidate 3, or Candidate 6's type/binding sub-case are revisited later, each has its own stated prerequisite (a policy-version witness, a sequencing/barrier witness, and type/provenance-matching infrastructure, respectively) to design first.
