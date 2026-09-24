@@ -142,7 +142,7 @@ It is not evidence that the governance mechanism is complete, correct, independe
 
 ## Relationship of the Current Implementation to the Track A Research Question
 
-Increments 001 through 010 construct prerequisites and one bounded experimental case. Increment 011 is in-progress research toward grounding a future obligation universe. Neither constitutes evaluation of the full Track A research question stated above.
+Increments 001 through 010 construct prerequisites and one bounded experimental case. Increment 011 completed a source-grounded selection of four dependencies for the first bounded experiment. Increment 013 completed the prospective design for their executable witnesses and controlled intervention matrix. None of these increments constitutes evaluation of the full Track A research question stated above.
 
 | Increment(s) | What it establishes |
 |---|---|
@@ -154,14 +154,16 @@ Increments 001 through 010 construct prerequisites and one bounded experimental 
 | 008 | Server-controlled authority-source boundary (the caller cannot supply the state used to evaluate its own obligation). |
 | 009 | A controlled authority change and a comparison of full revalidation against no revalidation. |
 | 010 | Process-local authority-transition evidence, retained and retrievable separately from decision evidence. |
-| 011 (in progress) | Prior-art research toward grounding an initial heterogeneous obligation universe in published mechanisms. No obligation set has been selected. No evaluated result exists yet. |
+| 011 (complete) | Source-grounded selection of witness/authorization freshness, effect/action binding, authorizing-path eligibility, and required-witness coverage (absence sub-case) for the first bounded experiment. No invalidation experiment has been run. |
+| 012 (complete) | Alignment of the public README with the controlling Track A question and its claim boundaries. |
+| 013 (complete) | Prospective executable witness model and controlled intervention matrix design. No runtime implementation or experimental result. |
 
 These increments construct mechanisms and research prerequisites for Track A. They do not constitute the Track A invalidation-mapping experiment.
 
 As of this increment, Runtime Validity has **not yet evaluated**:
 
 1. heterogeneous governance obligations (only one Boolean obligation kind, `authority_valid`, is implemented);
-2. a final, externally grounded obligation universe (Increment 011 is in progress toward one, not complete);
+2. the selected four-dependency set in an executable heterogeneous witness model (Increment 011 selected the set; Increment 013 completed its prospective design, but it is not implemented);
 3. multiple controlled runtime intervention classes (only one controlled intervention, a process-local authority change, is implemented);
 4. intervention-to-obligation invalidation mappings (the Track A primary question);
 5. obligation-scoped or selective revalidation (not implemented; only whole-decision full revalidation and no revalidation exist);
@@ -178,7 +180,7 @@ As of this increment, Runtime Validity has **not yet evaluated**:
 16. distributed ordering or concurrency guarantees;
 17. real external consequence enforcement.
 
-Items 1 through 10 are research questions and experiments not yet conducted, not defects in the current implementation: Increments 001-010 were not designed to answer them, and Increment 011 is in-progress groundwork for later addressing the first two.
+Items 1 through 10 are research questions and experiments not yet conducted, not defects in the current implementation: Increments 001-010 were not designed to answer them, Increment 011 selected the initial bounded dependency set, and completed Increment 013 is prospective design work rather than an experiment.
 
 ## Requirements
 
@@ -579,8 +581,9 @@ Increment 010 is complete after local verification and successful GitHub Actions
 008  Authority source boundary
 009  Authority change revalidation
 010  Authority transition evidence
-011  Externally grounded obligation universe (in progress; no evaluated result yet)
-012  Track A research alignment (this documentation increment)
+011  Externally grounded obligation universe (complete; four dependencies selected)
+012  Track A research alignment (complete)
+013  Executable witness model and intervention matrix design (complete)
 ```
 
 Detailed increment records are under:
@@ -609,7 +612,8 @@ runtime-validity/
 │       ├── 009-authority-change-revalidation.md
 │       ├── 010-authority-transition-evidence.md
 │       ├── 011-externally-grounded-obligation-universe.md
-│       └── 012-track-a-research-alignment.md
+│       ├── 012-track-a-research-alignment.md
+│       └── 013-design-executable-witness-model-and-intervention-matrix.md
 ├── src/
 │   └── runtime_validity/
 │       ├── __init__.py
@@ -726,29 +730,15 @@ They do not establish:
 - that the mechanism is sufficient for runtime governance generally
 - that the results generalize beyond this implementation
 
-## Next Research Question
+## Next Research-Engineering Step
 
-Decision-to-state binding is a candidate enabling engineering experiment for later Track A evaluation. It is not a replacement for the Track A invalidation-mapping research question stated in [Track A Research Question](#track-a-research-question); it is scaffolding that a later invalidation-mapping or disposition-preservation experiment may need.
+Increment 011 selected four dependencies for the first bounded Track A experiment: witness/authorization freshness, effect/action binding, authorizing-path eligibility, and required-witness coverage limited to the absence sub-case.
 
-The candidate experiment concerns decision-to-state binding:
+Increment 013 completed the prospective design for the executable witness representation and controlled intervention matrix. It defines what is bound at T0, what must be observed at T1, what each intervention changes, what remains fixed, how `PRESERVED`, `INVALIDATED`, and experiment-local `NON_EVALUABLE` mappings are distinguished, and what evidence a later experiment must retain.
 
-> What retained evidence is required to establish that a specific execution-time governance decision evaluated a specific runtime state or transition representation?
+No heterogeneous witness model, scoped revalidation, or invalidation-mapping experiment exists yet. The current runtime implementation still supports only the bounded `authority_valid` mechanism.
 
-Candidate mechanisms may include an explicit:
-
-```text
-state_version
-```
-
-or:
-
-```text
-transition reference
-```
-
-The experiment should not assume that timestamp proximity, matching values, or knowledge from the test procedure establishes causality.
-
-This is not necessarily the next numbered increment. Increment 011 (obligation-universe grounding) is already in progress toward the Track A primary question and is independent of this one.
+Decision-to-state binding remains a possible enabling mechanism for later Track A evaluation, not the current next step and not a replacement for the primary invalidation-mapping question. Timestamp proximity, matching values, or knowledge from a test procedure must not be treated as proof of causality.
 
 ## License
 
