@@ -42,6 +42,17 @@ class EligibilityValue:
             raise ValueError("authorizing_path_live must be a bool")
 
 
+@dataclass(frozen=True, slots=True)
+class CoverageValue:
+    present_witness_ids: frozenset[str]
+
+    def __post_init__(self) -> None:
+        if type(self.present_witness_ids) is not frozenset:
+            raise ValueError("present_witness_ids must be a frozenset")
+        if any(type(witness_id) is not str for witness_id in self.present_witness_ids):
+            raise ValueError("present witness IDs must be strings")
+
+
 def derive_freshness(
     *,
     expected_witness_id: str,
@@ -116,6 +127,32 @@ def derive_eligibility(
         raise ValueError("eligibility observation must retain authorizing path identity")
 
     if value.authorizing_path_live:
+        return MappingResult.PRESERVED
+
+    return MappingResult.INVALIDATED
+
+
+def derive_coverage(
+    *,
+    required_witness_ids: frozenset[str],
+    observation: Observation[CoverageValue],
+) -> MappingResult:
+    if type(required_witness_ids) is not frozenset:
+        raise ValueError("required_witness_ids must be a frozenset")
+    if any(type(witness_id) is not str for witness_id in required_witness_ids):
+        raise ValueError("required witness IDs must be strings")
+
+    if not observation.observation_attempted:
+        return MappingResult.NOT_EVALUATED
+
+    if observation.observation_status is ObservationStatus.UNAVAILABLE:
+        return MappingResult.NON_EVALUABLE
+
+    value = observation.observed_value
+    if not isinstance(value, CoverageValue):
+        raise ValueError("available coverage observation requires a coverage value")
+
+    if required_witness_ids <= value.present_witness_ids:
         return MappingResult.PRESERVED
 
     return MappingResult.INVALIDATED

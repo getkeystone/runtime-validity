@@ -32,7 +32,7 @@ Observed before this prospective record was created:
 - HEAD: `face7038270b7d05318d0cb47aefef44b61c8ab4`;
 - Increment 013: Complete;
 - tracked working tree: clean;
-- untracked working-tree entry: `uv.lock`;
+- initially untracked working-tree entry: `uv.lock`;
 - repository-local interpreter:
   `/data/repos/getkeystone/runtime-validity/.venv/bin/python`;
 - Python: 3.12.3;
@@ -43,12 +43,59 @@ Observed before this prospective record was created:
   `authority_valid` obligation and supports full or no revalidation;
 - no heterogeneous four-dependency mechanism exists;
 - no Track A invalidation-mapping experiment has run;
-- `uv.lock` is pre-existing, untracked, unrelated to this increment, and must
-  remain outside its changes.
+- `uv.lock` was pre-existing and untracked at this starting point; its later
+  independent transition into repository history is recorded below.
 
 The test result above is a starting-state engineering observation about the
 existing implementation. It is not an Increment 014 implementation result or a
 Track A experimental result.
+
+## Repository Provenance Note
+
+Increment 014 implementation began from commit
+`face7038270b7d05318d0cb47aefef44b61c8ab4`.
+
+Commit `9040bf44b8bed71c21552c4a0f9c12ead1db5fff`, titled `Increment 014
+(WIP): observation, binding, freshness, eligibility mechanisms`, first committed
+the accumulated Increment 014 work for the observation foundation, freshness,
+effect/action binding, authorizing-path eligibility, their focused tests, and
+the accumulated Increment 014 record. These mechanisms had been developed and
+reviewed as bounded slices, but Git provenance does not preserve those slices as
+separate commits: they first appear together in this single WIP commit. This
+weakens the commit-level granularity of the engineering history and prevents a
+later reviewer from reconstructing each slice boundary solely from Git commits.
+The intermediate review chronology preserved in this record is not a substitute
+for nonexistent slice-level commits. No history rewrite is being attempted to
+fabricate finer-grained provenance.
+
+The bundled commit does not convert focused engineering tests into experimental
+results. It does not establish an internal Track A experimental result or a
+research conclusion.
+
+Commit `5253559d1e4cdc3122e4470943adc06831a3a05c`, titled `Track uv.lock for
+reproducible test environment`, subsequently tracked `uv.lock` in a separate
+lockfile-only commit. `pyproject.toml`, dependency declarations, Increment 014
+mechanism code, and this record were unchanged in that commit. `uv.lock` was
+therefore initially untracked during early Increment 014 work and later tracked
+independently for the repository-environment purpose stated by the commit
+subject. That transition was not part of the Increment 014 mechanism
+implementation.
+
+After HEAD `5253559d1e4cdc3122e4470943adc06831a3a05c`, required-witness coverage
+was implemented as a working-tree delta in:
+
+```text
+src/runtime_validity/_experiment_mapping.py
+tests/test_experiment_coverage.py
+```
+
+That delta then underwent the skeptical review recorded under Intermediate
+Observed Coverage Engineering Result below and is committed as its own slice
+together with this record update, separately from the earlier bundled WIP
+commit.
+
+This coarser-than-actual commit history is a research-engineering provenance and
+reproducibility limitation. It is not by itself a scientific validity result.
 
 ## Frozen Inputs from Increment 013
 
@@ -243,8 +290,8 @@ constitutes Track A experimental validation.
 - raw, unbounded failure-reason values are rejected.
 
 These checks verify the observation prerequisites. Mapping-result derivation is
-now implemented for freshness, binding, and eligibility, as recorded below;
-required-witness coverage remains unimplemented.
+now implemented for freshness, binding, eligibility, and required-witness
+coverage, as recorded below.
 
 ### Freshness — observed
 
@@ -289,31 +336,38 @@ required-witness coverage remains unimplemented.
   effect state;
 - non-string observed or expected path identifiers are rejected.
 
-### Coverage — planned
+### Coverage — observed
 
+- deliberate non-observation derives `NOT_EVALUATED`;
+- attempted unavailable inventory observation derives `NON_EVALUABLE`
+  independently of its bounded failure reason;
 - required set being a subset of the present set derives `PRESERVED`;
-- known absence of a required member derives `INVALIDATED`;
-- unavailable inventory derives `NON_EVALUABLE`;
-- unavailable inventory is not converted to an empty present set.
+- known absence of either required member derives `INVALIDATED`;
+- an available empty present set is known absence and derives `INVALIDATED`;
+- unavailable inventory is not converted to an empty present set and remains
+  distinct from an available empty inventory;
+- present witnesses outside the required set do not invalidate coverage;
+- an empty required set uses subset semantics and derives `PRESERVED` when the
+  inventory is available (see the bounded design choice recorded below);
+- available observations with the wrong payload type are rejected;
+- mutable sets and non-string identifiers are rejected for both the required
+  and present inventories;
+- identical inputs produce identical results;
+- the derivation interface accepts only the required-ID set and the
+  observation;
+- the representation contains only the present-ID set.
 
 ### Isolation — observed and planned
 
-Observed for the implemented slices:
+Observed for all four implemented dependency slices:
 
-- the private observation module is not imported by the current API execution
-  path;
-- the observation module has no FastAPI or persistence dependency;
-- the implemented derivation interfaces do not accept scenario IDs, expected
-  mapping labels, policy dispositions, or current Runtime Validity API request
-  objects.
-
-Still planned for the coverage derivation interface:
-
-- derivation interfaces do not accept scenario IDs;
-- derivation interfaces do not accept expected mapping labels;
-- derivation interfaces do not accept policy disposition;
-- derivation interfaces do not accept current Runtime Validity API request
-  objects unless independently justified prospectively.
+- the private observation and mapping modules are not imported by the current
+  API execution path;
+- the observation and mapping modules have no FastAPI or persistence
+  dependency;
+- the implemented derivation interfaces, including `derive_coverage`, do not
+  accept scenario IDs, expected mapping labels, policy dispositions, or current
+  Runtime Validity API request objects.
 
 ### Regression — intermediate observed result
 
@@ -323,6 +377,8 @@ Still planned for the coverage derivation interface:
   private observation module;
 - the repository test suite passed with 79 tests and 0 failures after the
   eligibility implementation and skeptical review;
+- the repository test suite passed with 97 tests and 0 failures after the
+  coverage implementation and skeptical review;
 - final cross-mechanism regression and scope verification remain required after
   the remaining Increment 014 work.
 
@@ -686,9 +742,129 @@ assessed as clean. No bounded correction to source or tests was required.
 
 ### Remaining work after eligibility
 
-Increment 014 remains incomplete. Required-witness coverage representation and
-derivation, its focused engineering tests, final cross-mechanism regression and
-scope review, and the Increment 014 completion review remain outstanding.
+At the eligibility checkpoint, required-witness coverage, its focused tests,
+final cross-mechanism regression and scope review, and the Increment 014
+completion review remained outstanding. Coverage is recorded below.
+
+Nothing completed so far constitutes canonical baseline execution, 13-row
+matrix execution, experiment execution, an internal Track A experimental
+result, a research conclusion, API integration, runtime witness acquisition,
+persistence, policy disposition, or full/scoped reevaluation.
+
+## Intermediate Observed Coverage Engineering Result
+
+The coverage slice added:
+
+```text
+CoverageValue
+derive_coverage
+tests/test_experiment_coverage.py
+```
+
+The private frozen, slotted `CoverageValue` representation contains only the
+observed `present_witness_ids`, an exact built-in `frozenset` of exact built-in
+`str` identifiers. The fixed required-ID set is a keyword-only configuration
+input to the pure `derive_coverage` function, not part of the observed value,
+matching Increment 013's separation of the fixed required-set definition from
+the observed present-ID set. Mutable sets, `frozenset` subclasses, and
+non-string identifiers are rejected with `ValueError`. The required-ID set is
+validated before observation state is interpreted, consistent with the
+configuration-first ordering chosen for binding and eligibility.
+
+Derivation follows the frozen Increment 013 absence sub-case:
+
+```text
+not attempted                                -> NOT_EVALUATED
+attempted, UNAVAILABLE (any bounded reason)  -> NON_EVALUABLE
+AVAILABLE, required is a subset of present   -> PRESERVED
+AVAILABLE, some required ID absent           -> INVALIDATED
+```
+
+With a non-empty required set, an available empty present set is a
+successful, complete observation that establishes known absence of every
+required member and therefore derives `INVALIDATED`. An unavailable inventory carries no present-ID set and derives
+`NON_EVALUABLE`; it is never represented as, or converted to, an empty present
+set. This preserves Increment 013's rule that inability to read the inventory
+must never be used to infer absence. Present IDs outside the required set do not
+affect the result, because the frozen dependency concerns required-member
+absence only.
+
+### Empty required-set semantics: bounded design choice
+
+Increment 013 freezes the fixture-local required-ID set as `{W1, W2}` and does
+not specify behavior for an empty required set. Increment 014's planned coverage
+rule states only that a required set that is a subset of the present set derives
+`PRESERVED`. Applied literally, an empty required set is a subset of every
+available present set, so `derive_coverage` returns `PRESERVED` for it, and
+`test_empty_required_inventory_uses_subset_semantics` pins that behavior.
+
+This is retained as a bounded implementation design choice, not a frozen
+specification:
+
+- it follows the literal Increment 014 subset rule and introduces no new result
+  category or rejection rule absent from the frozen design;
+- it is unreachable in the frozen 13-row intervention matrix, whose required
+  set is always `{W1, W2}`;
+- it is consistent with the precedent recorded for binding and eligibility,
+  where properties the frozen design leaves unconstrained (for example empty
+  identifier strings) are accepted and documented rather than newly restricted.
+
+The choice has a known risk: an empty required set is vacuously covered, so a
+misconfigured or accidentally empty required set would derive `PRESERVED`
+rather than surface as a configuration defect. Any later use of this mechanism
+outside the frozen fixtures, or any experiment that varies the required set,
+must decide prospectively whether an empty required set is valid configuration,
+a configuration error, or `NON_EVALUABLE`. This record does not make that
+decision.
+
+Increment 013 also names an unobtainable required-set definition as a
+`NON_EVALUABLE` condition. In this pure mechanism the required set is a fixed
+configuration input supplied by the fixture, so there is no runtime acquisition
+of the required-set definition to fail; a malformed definition is rejected with
+`ValueError` as a configuration error. Representing an unobtainable required-set
+definition as an observation is outside this mechanism slice.
+
+Eighteen focused coverage engineering tests cover deliberate non-observation,
+unavailable observation, preservation with both required witnesses present,
+invalidation with either required witness absent, invalidation by an available
+empty inventory, non-invalidation by extra present witnesses, the distinction
+between unavailable and available-empty inventories, wrong-payload rejection,
+repeated-input determinism, failure-reason independence, interface isolation,
+representation isolation, mutable-inventory and non-string-identifier
+rejection for both inventories, and empty-required-set subset semantics.
+Together with the existing tests, the repository-local test command completed
+with 97 tests passed and 0 failed.
+
+The bounded intermediate engineering observation is:
+
+> The frozen required-witness coverage absence rule can be represented and
+> deterministically derived from synthetic observation values under focused
+> engineering tests, with known absence of a required member invalidating
+> coverage and unavailable inventory evidence remaining distinct from both
+> absence and an available empty inventory.
+
+This is an engineering observation only. It is not a Track A experimental
+result, evidence that any real witness inventory is complete or authentic,
+evidence about witness type or binding sufficiency, which remain deferred, or a
+research conclusion.
+
+### Coverage review history
+
+The coverage slice underwent a skeptical read-only review against Increments 013
+and 014. Frozen-design conformance, coverage representation, observation and
+configuration behavior, derivation, the unavailable versus available-empty
+distinction, oracle and API isolation, and test coverage were assessed as
+consistent with the frozen design. No source or test correction was required.
+The review identified two items recorded rather than changed: the
+empty-required-set semantics documented above, and that configuration-first
+validation ordering with an unattempted or unavailable observation is exercised
+by code but, as in the binding and eligibility slices, not pinned by a focused
+test. The latter is carried into the final cross-mechanism review.
+
+### Remaining work after coverage
+
+Increment 014 remains incomplete. The final cross-mechanism regression and
+scope review and the Increment 014 completion review remain outstanding.
 
 Nothing completed so far constitutes canonical baseline execution, 13-row
 matrix execution, experiment execution, an internal Track A experimental
@@ -763,6 +939,25 @@ prospectively expected tests pass.
   fixed-control isolation is preserved, skeptical review required no source or
   test correction, and the repository suite passed with 79 tests and 0 failures:
   **Engineering observations**.
+- The private frozen/slotted `CoverageValue` containing only the present-ID
+  set, exact `frozenset` and exact `str` validation, the required-ID set as a
+  keyword-only configuration input validated before observation-state
+  handling, subset-based derivation, and subset semantics for an empty required
+  set outside the frozen matrix: **Design choices**.
+- The coverage mechanism exists, full presence preserves, known absence of
+  either required member invalidates, an available empty inventory invalidates,
+  unavailable inventory remains `NON_EVALUABLE` and distinct from an available
+  empty inventory, extra present witnesses do not invalidate, skeptical review
+  required no source or test correction, and the repository suite passed with
+  97 tests and 0 failures: **Engineering observations**.
+- Git history shows that the previously reviewed observation, freshness,
+  binding, and eligibility slices first entered repository history together in
+  WIP commit `9040bf4`, followed by independent tracking of `uv.lock` in commit
+  `5253559`: **Engineering observations**.
+- Commit-level provenance is coarser than the actual slice-by-slice engineering
+  and review process, and the individual slice boundaries cannot be reconstructed
+  solely from Git commits: **Research-engineering provenance and reproducibility
+  limitation**.
 - Internal evaluation result: **None**.
 - Increment 013's expected mappings: **Research hypotheses**, unchanged by this
   prospective record.
@@ -808,7 +1003,7 @@ Increment 014 may be marked Complete only when:
 
 ## Observed Result
 
-Four intermediate Increment 014 engineering results have been observed. First,
+Five intermediate Increment 014 engineering results have been observed. First,
 the frozen observation states can be represented in memory and the specified
 impossible observation combinations are mechanically rejected. Second, the
 frozen freshness rule can be deterministically derived while preserving witness
@@ -819,11 +1014,16 @@ classified as binding invalidation and unavailable identity evidence kept
 distinct from substantive invalidation. Fourth, the frozen authorizing-path
 eligibility rule can be deterministically derived while path identity remains a
 fixed control, Boolean liveness supplies the dependency value, and unavailable
-evidence remains distinct from substantive invalidation. The repository test
-suite passed with 79 tests and 0 failures, and the current `/decide` path remains
-isolated from the private experiment modules.
+evidence remains distinct from substantive invalidation. Fifth, the frozen
+required-witness coverage absence rule can be deterministically derived with
+known absence of a required member classified as invalidation and unavailable
+inventory evidence kept distinct from both absence and an available empty
+inventory. The repository test suite passed with 97 tests and 0 failures, and the
+current `/decide` path remains isolated from the private experiment modules.
 
-Required-witness coverage remains unimplemented. No canonical baseline or
+All four frozen dependency mechanisms now exist as private pure derivations.
+Increment 014 is not complete: the final cross-mechanism regression and scope
+review and the completion review remain outstanding. No canonical baseline or
 scenario matrix has been executed, no Track A experiment has run, no internal
 experimental result exists, and no research conclusion is claimed. Nothing
 implemented so far performs API integration, runtime witness acquisition,
@@ -846,15 +1046,21 @@ tests/test_experiment_observation.py
 tests/test_experiment_freshness.py
 tests/test_experiment_binding.py
 tests/test_experiment_eligibility.py
+tests/test_experiment_coverage.py
 ```
 
 ## Commit
 
-Not yet committed.
+The accumulated observation, freshness, binding, and eligibility work first
+entered repository history together in WIP commit `9040bf4`. The later
+lockfile-only commit is `5253559`. The required-witness coverage slice, its
+focused tests, the provenance note, and this record update are committed
+together as a separate coverage-slice commit following `5253559`.
 
 ## Next Step
 
-Implement only the required-witness coverage representation and derivation in a
-separate dependency-specific slice. This record does not authorize
-scenario-matrix execution, experiment execution, API integration, or any later
-increment.
+Perform the final cross-mechanism regression and scope review across the
+observation, freshness, binding, eligibility, and coverage slices, then the
+Increment 014 completion review against the Completion Criteria. This record
+does not authorize scenario-matrix execution, experiment execution, API
+integration, or any later increment.
