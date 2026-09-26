@@ -1,6 +1,6 @@
 # Increment 014: Implement Pure Witness Mapping Mechanism
 
-Status: In Progress
+Status: Complete
 
 ## Objective
 
@@ -958,6 +958,11 @@ prospectively expected tests pass.
   and review process, and the individual slice boundaries cannot be reconstructed
   solely from Git commits: **Research-engineering provenance and reproducibility
   limitation**.
+- The four frozen Increment 013 dependency semantics can be represented as
+  isolated deterministic in-memory mechanisms over synthetic observation
+  values, with deliberate non-evaluation, observation failure, preservation,
+  and substantive invalidation mechanically distinguished under focused
+  engineering tests: **Engineering observation**.
 - Internal evaluation result: **None**.
 - Increment 013's expected mappings: **Research hypotheses**, unchanged by this
   prospective record.
@@ -1022,12 +1027,85 @@ inventory. The repository test suite passed with 97 tests and 0 failures, and th
 current `/decide` path remains isolated from the private experiment modules.
 
 All four frozen dependency mechanisms now exist as private pure derivations.
-Increment 014 is not complete: the final cross-mechanism regression and scope
-review and the completion review remain outstanding. No canonical baseline or
-scenario matrix has been executed, no Track A experiment has run, no internal
-experimental result exists, and no research conclusion is claimed. Nothing
-implemented so far performs API integration, runtime witness acquisition,
-persistence, policy disposition, or full/scoped reevaluation.
+The final cross-mechanism regression, scope, and completion-readiness reviews
+found the bounded engineering completion criteria satisfied after the README
+claim-classification correction recorded below. Increment 014 is complete. No
+canonical baseline or scenario matrix has been executed, no Track A experiment
+has run, no internal evaluation result exists, and no research conclusion is
+claimed. Nothing implemented performs API integration, runtime witness
+acquisition, persistence, policy disposition, or full/scoped reevaluation.
+
+## Completion Review and Closure
+
+Increment 014 completed the bounded mechanism objective with the following
+private experiment-local implementation:
+
+1. The observation foundation distinguishes deliberate non-observation,
+   `AVAILABLE`, and `UNAVAILABLE`; admits only bounded observation failure
+   reasons; and rejects structurally impossible observation states.
+2. The shared mapping result contains exactly `PRESERVED`, `INVALIDATED`,
+   `NON_EVALUABLE`, and `NOT_EVALUATED`.
+3. Freshness retains a stable witness identity, uses deterministic
+   integer/logical age and a fixed maximum-age threshold, preserves when age is
+   less than or equal to the threshold, invalidates when age exceeds the
+   threshold, and rejects witness-identity drift as outside the frozen
+   intervention.
+4. Effect/action binding uses fixture-local effect identity, preserving equal
+   identity and invalidating changed identity.
+5. Authorizing-path eligibility retains stable path identity and exact Boolean
+   liveness, preserving when liveness is true, invalidating when it is false,
+   and rejecting path-identity drift as outside the frozen intervention.
+6. Required-witness coverage implements only the frozen absence sub-case. It
+   uses a fixed required-ID inventory and an immutable present-ID inventory,
+   preserves when the required IDs are a subset of the present IDs, invalidates
+   known required-member absence, and derives `NON_EVALUABLE` for unavailable
+   inventory evidence without converting it into an available empty inventory.
+
+### Completion evidence
+
+- the repository-local suite passed with 97 tests and 0 failures;
+- the focused mechanism tests remain engineering tests over synthetic
+  observations and do not implement the Increment 013 scenario matrix;
+- the existing API regression tests remain passing;
+- `git diff --check` passed;
+- the current `/decide` path remains unchanged and does not import the private
+  experiment modules;
+- Increment 014 mechanism work introduced no new third-party dependency;
+- no 13-row scenario matrix, scenario runner, or experiment execution was
+  introduced.
+
+The final closure-readiness review identified one documentation and
+claim-discipline issue, not an implementation defect. README had classified the
+aggregate result as: "The 97-test result is an internal evaluation result for
+this commit." It was corrected to: "The 97-test result is a repository-local
+engineering verification result for this commit."
+
+### Claim boundaries at completion
+
+- **Definition:** the bounded mechanism uses the inherited Increment 013
+  observation, freshness, effect/action binding, authorizing-path eligibility,
+  and required-witness coverage semantics.
+- **Design choices:** the private experiment-local Python representations and
+  derivations, exact primitive-type validation choices, immutable coverage
+  inventories, deterministic `ValueError` handling, and the recorded
+  configuration-validation ordering.
+- **Engineering observation:** the four frozen Increment 013 dependency
+  semantics can be represented as isolated deterministic in-memory mechanisms
+  over synthetic observation values, with deliberate non-evaluation,
+  observation failure, preservation, and substantive invalidation mechanically
+  distinguished under focused engineering tests.
+- **Internal evaluation result:** None.
+- **Research hypothesis:** Increment 013's expected scenario mappings remain
+  hypotheses.
+- **Research conclusion:** None.
+
+Completion does not establish that the 13-row mapping experiment passed, that
+the prospective mappings are empirically correct, that obligation-scoped
+revalidation preserves full-reevaluation disposition, that authentic external
+witness acquisition or revocation occurred, that production authentication or
+authorization is implemented, that policy behavior is correct, that external
+consequences are enforced, that the mechanism is portable beyond this bounded
+implementation, or that Track A has a research conclusion.
 
 ## Artifacts
 
@@ -1059,8 +1137,7 @@ together as a separate coverage-slice commit following `5253559`.
 
 ## Next Step
 
-Perform the final cross-mechanism regression and scope review across the
-observation, freshness, binding, eligibility, and coverage slices, then the
-Increment 014 completion review against the Completion Criteria. This record
-does not authorize scenario-matrix execution, experiment execution, API
-integration, or any later increment.
+Increment 014 leaves the frozen mechanism ready for a separately authorized
+future increment that may instantiate and execute the Increment 013 scenario
+matrix. That future work remains separate from Increment 014 and is not
+authorized by this record.

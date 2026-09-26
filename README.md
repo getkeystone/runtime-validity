@@ -142,7 +142,7 @@ It is not evidence that the governance mechanism is complete, correct, independe
 
 ## Relationship of the Current Implementation to the Track A Research Question
 
-Increments 001 through 010 construct prerequisites and one bounded experimental case. Increment 011 completed a source-grounded selection of four dependencies for the first bounded experiment. Increment 013 completed the prospective design for their executable witnesses and controlled intervention matrix. Increment 014, in progress, implements private pure mapping mechanisms for those four dependencies without executing the experiment. None of these increments constitutes evaluation of the full Track A research question stated above.
+Increments 001 through 010 construct prerequisites and one bounded experimental case. Increment 011 completed a source-grounded selection of four dependencies for the first bounded experiment. Increment 013 completed the prospective design for their executable witnesses and controlled intervention matrix. Increment 014 completed private pure mapping mechanisms for those four dependencies without executing the experiment. None of these increments constitutes evaluation of the full Track A research question stated above.
 
 | Increment(s) | What it establishes |
 |---|---|
@@ -157,7 +157,7 @@ Increments 001 through 010 construct prerequisites and one bounded experimental 
 | 011 (complete) | Source-grounded selection of witness/authorization freshness, effect/action binding, authorizing-path eligibility, and required-witness coverage (absence sub-case) for the first bounded experiment. No invalidation experiment has been run. |
 | 012 (complete) | Alignment of the public README with the controlling Track A question and its claim boundaries. |
 | 013 (complete) | Prospective executable witness model and controlled intervention matrix design. No runtime implementation or experimental result. |
-| 014 (in progress) | Private, pure, in-memory mapping mechanisms for the four selected dependencies, deriving experiment-local `PRESERVED`, `INVALIDATED`, `NON_EVALUABLE`, or `NOT_EVALUATED` from synthetic observations. Not used by `/decide`; no scenario matrix or experiment has been executed. |
+| 014 (complete) | Private, pure, in-memory mapping mechanisms for the four selected dependencies, deriving experiment-local `PRESERVED`, `INVALIDATED`, `NON_EVALUABLE`, or `NOT_EVALUATED` from synthetic observations. Not used by `/decide`; no scenario matrix or experiment has been executed. |
 
 These increments construct mechanisms and research prerequisites for Track A. They do not constitute the Track A invalidation-mapping experiment.
 
@@ -547,7 +547,7 @@ Current coverage includes:
 - the experimental authority-control endpoint rejects an invalid control token
 - the experimental authority-control endpoint, when enabled with a valid token, drives the same live revalidation path exercised above
 
-The 97-test result is an internal evaluation result for this commit.
+The 97-test result is a repository-local engineering verification result for this commit.
 
 It is not independent validation, and it is not evidence toward the Track A research question above: none of these tests exercise more than one obligation, more than one intervention class, or a comparison against full commit-boundary reevaluation of a heterogeneous decision.
 
@@ -585,7 +585,7 @@ Increment 010 is complete after local verification and successful GitHub Actions
 011  Externally grounded obligation universe (complete; four dependencies selected)
 012  Track A research alignment (complete)
 013  Executable witness model and intervention matrix design (complete)
-014  Pure witness mapping mechanism (in progress; four dependency mechanisms implemented; final reviews outstanding)
+014  Pure witness mapping mechanism (complete; four dependency mechanisms implemented and reviewed)
 ```
 
 Detailed increment records are under:
@@ -663,7 +663,7 @@ The implementation currently provides:
 - process-local transition retention and retrieval
 - rejection of caller-supplied transition evidence
 - automated tests and GitHub Actions CI
-- private, pure, experiment-local mapping mechanisms for the four Increment 011 dependencies (Increment 014, in progress; not used by `/decide`)
+- private, pure, experiment-local mapping mechanisms for the four Increment 011 dependencies (Increment 014, complete; not used by `/decide`)
 
 ## Current Limitations
 
@@ -752,7 +752,7 @@ Increment 011 selected four dependencies for the first bounded Track A experimen
 
 Increment 013 completed the prospective design for the executable witness representation and controlled intervention matrix. It defines what is bound at T0, what must be observed at T1, what each intervention changes, what remains fixed, how `PRESERVED`, `INVALIDATED`, and experiment-local `NON_EVALUABLE` mappings are distinguished, and what evidence a later experiment must retain.
 
-Increment 014, in progress, implements private pure mapping mechanisms for all four selected dependencies. They are not integrated into a runtime witness model or the `/decide` path, and the scenario matrix has not been executed. No integrated heterogeneous witness model, scoped revalidation, or invalidation-mapping experiment exists yet. The current runtime implementation still supports only the bounded `authority_valid` mechanism.
+Increment 014 is complete. It implements private pure mapping mechanisms for all four selected dependencies. They are not integrated into a runtime witness model or the `/decide` path, and the scenario matrix has not been executed. The next separately authorized step may instantiate and execute the frozen Increment 013 scenario matrix; that work has not begun. No integrated heterogeneous witness model, scoped revalidation, or invalidation-mapping experiment exists yet. The current runtime implementation still supports only the bounded `authority_valid` mechanism.
 
 Decision-to-state binding remains a possible enabling mechanism for later Track A evaluation, not the current next step and not a replacement for the primary invalidation-mapping question. Timestamp proximity, matching values, or knowledge from a test procedure must not be treated as proof of causality.
 
